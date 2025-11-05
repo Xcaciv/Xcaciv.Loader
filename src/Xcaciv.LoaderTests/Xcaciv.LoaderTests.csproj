@@ -15,5 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Xcaciv.Loader\Xcaciv.Loader.csproj" />
+    <ProjectReference Include="..\zTestInterfaces\zTestInterfaces.csproj" />
   </ItemGroup>
 </Project>
