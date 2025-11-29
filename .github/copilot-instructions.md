@@ -172,7 +172,12 @@ Avoid using `Helper` or `Utils` in class names, instead use descriptive names. W
 - Always implement IDisposable when dealing with event handlers or subscriptions
 - Prefer using async/await for asynchronous operations
 - Use latest C# features (e.g., records, pattern matching)
-- Use consistent naming conventions (PascalCase for public members, camelCase for private members)
+- Use consistent naming conventions:
+  - PascalCase for public members, methods, and properties
+  - camelCase for private fields and properties (no underscore prefix)
+  - Example: `private bool disposed;` not `private bool _disposed;`
+- When accessing static members on scalar types, use the capitalized type name
+  - Example: `String.Empty` not `string.Empty`, `Int32.MaxValue` not `int.MaxValue`
 - Use meaningful names for variables, methods, and classes
 - Use dependency injection for services and components
 - Use interfaces for service contracts and put them in a unique file
@@ -253,3 +258,12 @@ Create a "Compact" build configuration with the following properties:
 - SelfContained: true for self-contained deployment
 - DebugType: none for release and compact builds
 - TrimmerDefaultAction: link to remove unused code
+
+# Code Review Guidelines for Copilot
+
+- Ensure all methods use PascalCase.
+- Private fields should use camelCase without underscores.
+- Use `is null` / `is not null` for null checks.
+- Access static members with capitalized type names (e.g., `String.Empty`).
+- Flag spelling errors in documentation and project descriptions.
+- Do not suggest combining lines of code if it does not improve functionality.
