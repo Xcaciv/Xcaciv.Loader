@@ -426,7 +426,6 @@ public class AssemblyIntegrityVerifierTests
             enabled: true,
             learningMode: true);
 
-        var originalHash = verifier.ComputeHash(testAssemblyPath);
         verifier.HashStore.AddOrUpdate(testAssemblyPath, "manualHash==");
 
         // Act & Assert - Existing hash should be verified even in learning mode
