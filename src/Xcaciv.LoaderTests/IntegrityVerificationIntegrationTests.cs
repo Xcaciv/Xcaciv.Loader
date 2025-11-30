@@ -14,15 +14,15 @@ public class IntegrityVerificationIntegrationTests
     private readonly string tempDirectory;
     private readonly string testDllPath;
 
-    private string simpleDllPath = @"..\..\..\..\TestAssembly\bin\{1}\net8.0\zTestAssembly.dll";
+    private readonly string simpleDllPath;
 
     public IntegrityVerificationIntegrationTests()
     {
 
 #if DEBUG
-        this.simpleDllPath = simpleDllPath.Replace("{1}", "Debug");
+        this.simpleDllPath = @"..\..\..\..\TestAssembly\bin\Debug\net8.0\zTestAssembly.dll";
 #else
-        this.simpleDllPath = simpleDllPath.Replace("{1}", "Release");
+        this.simpleDllPath = @"..\..\..\..\TestAssembly\bin\Release\net8.0\zTestAssembly.dll";
 #endif
 
         // resolve absolute paths
