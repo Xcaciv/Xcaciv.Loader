@@ -290,12 +290,9 @@ public class AssemblyHashStore
         
         lock (lockObject)
         {
-            foreach (var kvp in loadedHashes)
+            foreach (var kvp in loadedHashes.Where(kvp => overwriteExisting || !hashes.ContainsKey(kvp.Key)))
             {
-                if (overwriteExisting || !hashes.ContainsKey(kvp.Key))
-                {
-                    hashes[kvp.Key] = kvp.Value;
-                }
+                hashes[kvp.Key] = kvp.Value;
             }
         }
     }
