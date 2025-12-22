@@ -20,6 +20,11 @@ namespace Xcaciv.Loader;
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public class AssemblyContext : IAssemblyContext
 {
+    // Global dynamic assembly monitoring (opt-in per context)
+    private static readonly object globalMonitorLock = new();
+    private static bool globalMonitorSubscribed = false;
+    private static readonly List<WeakReference<AssemblyContext>> globalMonitorSubscribers = new();
+
     /// <summary>
     /// Used by disposal - tracks whether Dispose has been called
     /// </summary>
@@ -464,6 +469,92 @@ public class AssemblyContext : IAssemblyContext
         this.loadContext.Resolving += LoadContext_Resolving;
         this.isLoaded = false;
     }
+
+    /// <summary>
+    /// Enables opt-in global monitoring of dynamic (in-memory) assemblies created anywhere in the AppDomain.
+    /// When enabled, this context will raise <see cref="SecurityViolation"/> when a dynamic assembly is observed
+    /// and this context's <see cref="SecurityPolicy"/> disallows dynamic assemblies. This is audit-only.
+    /// </summary>
+    public void EnableGlobalDynamicAssemblyMonitoring()
+    {
+        ThrowIfDisposed();
+        lock (globalMonitorLock)
+        {
+            // Avoid duplicate entries
+            if (!globalMonitorSubscribers.Any(wr => wr.TryGetTarget(out var target) && ReferenceEquals(target, this)))
+            {
+                globalMonitorSubscribers.Add(new WeakReference<AssemblyContext>(this));
+            }
+
+            if (!globalMonitorSubscribed)
+            {
+                AppDomain.CurrentDomain.AssemblyLoad += GlobalAssemblyLoadHandler;
+                globalMonitorSubscribed = true;
+            }
+        }
+    }
+
+    private static void GlobalAssemblyLoadHandler(object? sender, AssemblyLoadEventArgs args)
+    {
+        try
+        {
+            if (args.LoadedAssembly is null || !args.LoadedAssembly.IsDynamic)
+                return;
+
+            var identifier = String.IsNullOrWhiteSpace(args.LoadedAssembly.Location)
+                ? (args.LoadedAssembly.FullName ?? "<dynamic>")
+                : args.LoadedAssembly.Location;
+
+            lock (globalMonitorLock)
+            {
+                for (int i = globalMonitorSubscribers.Count - 1; i >= 0; i--)
+                {
+                    if (!globalMonitorSubscribers[i].TryGetTarget(out var ctx) || ctx is null)
+                    {
+                        globalMonitorSubscribers.RemoveAt(i);
+                        continue;
+                    }
+
+                    // Raise only for contexts that disallow dynamic assemblies
+                    if (ctx.SecurityPolicy.DisallowDynamicAssemblies)
+                    {
+                        ctx.SecurityViolation?.Invoke(identifier, "Global monitor: Dynamic assembly load detected.");
+                    }
+                }
+
+                // If no subscribers remain, detach the handler
+                if (globalMonitorSubscribers.Count == 0 && globalMonitorSubscribed)
+                {
+                    AppDomain.CurrentDomain.AssemblyLoad -= GlobalAssemblyLoadHandler;
+                    globalMonitorSubscribed = false;
+                }
+            }
+        }
+        catch
+        {
+            // Swallow to avoid impacting application load flow; audit-only
+        }
+    }
+
+    private static void RemoveGlobalSubscriber(AssemblyContext ctx)
+    {
+        lock (globalMonitorLock)
+        {
+            for (int i = globalMonitorSubscribers.Count - 1; i >= 0; i--)
+            {
+                if (!globalMonitorSubscribers[i].TryGetTarget(out var target) || ReferenceEquals(target, ctx))
+                {
+                    globalMonitorSubscribers.RemoveAt(i);
+                }
+            }
+
+            if (globalMonitorSubscribers.Count == 0 && globalMonitorSubscribed)
+            {
+                AppDomain.CurrentDomain.AssemblyLoad -= GlobalAssemblyLoadHandler;
+                globalMonitorSubscribed = false;
+            }
+        }
+    }
     
     /// <summary>
     /// resolve assembly when not immediately found (not folder adjacent or GAC)
@@ -499,6 +590,20 @@ public class AssemblyContext : IAssemblyContext
         {
             // Verify the resolved path against security restrictions
             var verifiedPath = VerifyPath(path, "*", this.SecurityPolicy);
+            
+            // Preflight: inspect metadata for emit/expressions indicators under strict policy
+            if (this.SecurityPolicy.StrictMode)
+            {
+                var preflight = AssemblyPreflightAnalyzer.Analyze(verifiedPath);
+                if (preflight.HasAnyIndicators)
+                {
+                    var reason = preflight.Indicators.Count > 0 
+                        ? String.Join(", ", preflight.Indicators)
+                        : "Preflight detected Reflection.Emit or Expressions.Compile";
+                    SecurityViolation?.Invoke(verifiedPath, $"Preflight policy violation: {reason}");
+                    throw new SecurityException("Preflight policy violation under strict policy: Reflection.Emit/LINQ Compile detected.");
+                }
+            }
             
             // Verify assembly integrity if enabled
             IntegrityVerifier?.VerifyIntegrity(verifiedPath);
@@ -576,6 +681,20 @@ public class AssemblyContext : IAssemblyContext
                 throw ex;
             }
             
+            // Preflight: inspect metadata for emit/expressions indicators under strict policy
+            if (this.SecurityPolicy.StrictMode)
+            {
+                var preflight = AssemblyPreflightAnalyzer.Analyze(this.FilePath);
+                if (preflight.HasAnyIndicators)
+                {
+                    var reason = preflight.Indicators.Count > 0 
+                        ? String.Join(", ", preflight.Indicators)
+                        : "Preflight detected Reflection.Emit or Expressions.Compile";
+                    SecurityViolation?.Invoke(this.FilePath, $"Preflight policy violation: {reason}");
+                    throw new SecurityException("Preflight policy violation under strict policy: Reflection.Emit/LINQ Compile detected.");
+                }
+            }
+            
             // Verify assembly integrity if enabled
             IntegrityVerifier?.VerifyIntegrity(this.FilePath);
             
@@ -629,6 +748,12 @@ public class AssemblyContext : IAssemblyContext
 
             if (loadedAssembly is not null)
             {
+                // Enforce policy: disallow dynamic/in-memory assemblies when configured
+                if (loadedAssembly.IsDynamic && this.SecurityPolicy.DisallowDynamicAssemblies)
+                {
+                    SecurityViolation?.Invoke(this.FilePath, "Dynamic assemblies are disallowed by security policy.");
+                    throw new SecurityException("Dynamic assemblies are disallowed by security policy.");
+                }
                 this.assemblyName = loadedAssembly.GetName();
                 this.isLoaded = true;
                 
@@ -686,6 +811,12 @@ public class AssemblyContext : IAssemblyContext
             var loadedAssembly = this.loadContext!.LoadFromAssemblyName(this.assemblyName);
             if (loadedAssembly is not null)
             {
+                // Enforce policy: disallow dynamic/in-memory assemblies when configured
+                if (loadedAssembly.IsDynamic && this.SecurityPolicy.DisallowDynamicAssemblies)
+                {
+                    SecurityViolation?.Invoke(this.assemblyName.FullName ?? "Unknown", "Dynamic assemblies are disallowed by security policy.");
+                    throw new SecurityException("Dynamic assemblies are disallowed by security policy.");
+                }
                 this.FilePath = VerifyPath(loadedAssembly.Location, "*", this.SecurityPolicy);
                 this.isLoaded = true;
                 
@@ -1260,6 +1391,8 @@ public class AssemblyContext : IAssemblyContext
                 Unload();
                 disposalTokenSource.Cancel();
                 disposalTokenSource.Dispose();
+                // Remove this instance from global monitoring subscribers
+                RemoveGlobalSubscriber(this);
             }
         }
         
