@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Target Frameworks - Build for both .NET 8 and .NET 10 by default -->
-    <TargetFrameworks Condition="'$(UseNet10)' == 'true'">net8.0;net10.0</TargetFrameworks>
-    <TargetFrameworks Condition="'$(UseNet10)' != 'true'">net8.0</TargetFrameworks>
+    <!-- Target Frameworks - Build for both .NET 10 and .NET 8 when UseNet08 is true -->
+    <TargetFrameworks Condition="'$(UseNet08)' == 'true'">net10.0;net8.0</TargetFrameworks>
+    <TargetFrameworks Condition="'$(UseNet08)' != 'true'">net10.0</TargetFrameworks>
     
     <!-- Version Information -->
     <Version>2.1.1</Version>
@@ -21,12 +21,12 @@
     <!-- Package Metadata -->
     <PackageId>Xcaciv.Loader</PackageId>
     <Title>Xcaciv.Loader - Secure Dynamic Assembly Loading</Title>
-    <Description>Secure, modern .NET library for runtime loading of types from external assemblies. Features instance-based security policies, optional cryptographic integrity verification, comprehensive audit trail events, and SSEM-compliant architecture. Perfect for plugin systems and modular applications.</Description>
+    <Description>Secure, modern .NET library for runtime loading of types from external assemblies. Features instance-based security policies, optional cryptographic integrity verification, comprehensive audit trail events, and SSEM-compliant architecture. Perfect for plugin systems and modular applications. Supports .NET 10 and .NET 8.</Description>
     <Authors>Alton Crossley</Authors>
     <Copyright>Copyright © 2021-2025 Alton Crossley</Copyright>
     
     <!-- Package Classification -->
-    <PackageTags>assembly;loader;plugin;dynamic;security;modular;plugins;addins;extensions;reflection;isolation;unloading;integrity;verification;SSEM</PackageTags>
+    <PackageTags>assembly;loader;plugin;dynamic;security;modular;plugins;addins;extensions;reflection;isolation;unloading;integrity;verification;SSEM;net10;net8</PackageTags>
     <PackageProjectUrl>https://github.com/Xcaciv/Xcaciv.Loader</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Xcaciv/Xcaciv.Loader</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -35,14 +35,19 @@
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     
     <!-- Release Notes -->
-    <PackageReleaseNotes>Major v2.0 release with breaking changes and significant new features:
+    <PackageReleaseNotes>Major v2.1 release with .NET 10 support and continued .NET 8 compatibility:
 
-BREAKING CHANGES:
+NEW IN v2.1:
+✅ Default target: .NET 10 (with optional .NET 8 support)
+✅ Multi-targeting support for both .NET 10 and .NET 8 in NuGet package
+✅ Simplified build process with UseNet08 flag
+
+BREAKING CHANGES FROM v2.0:
 - Security configuration now instance-based (use AssemblySecurityPolicy parameter)
 - Deprecated static SetStrictDirectoryRestriction() - will be removed in v3.0
 - GetLoadedTypes&lt;T&gt;() moved to AssemblyScanner class
 
-NEW FEATURES:
+FEATURES:
 ✅ Instance-based security policies (Default/Strict/Custom)
 ✅ Optional assembly integrity verification with SHA256/384/512
 ✅ Comprehensive event system for audit trail and monitoring

@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 param(
     [Parameter(Mandatory = $false)]
-    [switch]$UseNet10 = $false,
+    [switch]$UseNet08 = $false,
     
     [Parameter(Mandatory = $false)]
     [switch]$Test = $false,
@@ -29,15 +29,15 @@ Write-Host "Xcaciv.Loader Build Script"
 Write-Host "====================================================="
 if ($Publish) {
     Write-Host "Mode: Publish" -ForegroundColor Cyan
-    if ($UseNet10) {
-        Write-Host "Target Frameworks: .NET 8.0 and .NET 10.0" -ForegroundColor Cyan
+    if ($UseNet08) {
+        Write-Host "Target Frameworks: .NET 10.0 and .NET 8.0" -ForegroundColor Cyan
     } else {
-        Write-Host "Target Framework: .NET 8.0 only" -ForegroundColor Cyan
+        Write-Host "Target Framework: .NET 10.0 only" -ForegroundColor Cyan
     }
-} elseif ($UseNet10) {
-    Write-Host "Target Frameworks: .NET 8.0 and .NET 10.0"
+} elseif ($UseNet08) {
+    Write-Host "Target Frameworks: .NET 10.0 and .NET 8.0"
 } else {
-    Write-Host "Target Framework: .NET 8.0 only"
+    Write-Host "Target Framework: .NET 10.0 only"
 }
 Write-Host "Run Tests: $( if ($Test) { "Yes" } else { "No" } )"
 Write-Host "Local NuGet path: $LocalNugetPath"
@@ -50,8 +50,8 @@ Write-Host "====================================================="
 
 # Build
 Write-Host "Building solution..." -ForegroundColor Cyan
-if ($UseNet10) {
-    $buildCommand = "dotnet build --configuration Release /p:UseNet10=true"
+if ($UseNet08) {
+    $buildCommand = "dotnet build --configuration Release /p:UseNet08=true"
 } else {
     $buildCommand = "dotnet build --configuration Release"
 }
@@ -132,8 +132,8 @@ if ($Publish) {
 if ($Test) {
     Write-Host "Running tests..." -ForegroundColor Cyan
     $testCommand = "dotnet test --no-build --configuration Release"
-    if ($UseNet10) {
-        $testCommand += " /p:UseNet10=true"
+    if ($UseNet08) {
+        $testCommand += " /p:UseNet08=true"
     }
     Write-Host "Executing: $testCommand" -ForegroundColor Gray
     Invoke-Expression $testCommand
