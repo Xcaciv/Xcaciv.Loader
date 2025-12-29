@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -24,13 +25,40 @@ public class ThreadSafetyTests
     {
         this.output = output;
         
+        // Detect the target framework at runtime
+        var targetFramework = GetTargetFramework();
+        output.WriteLine($"Tests running on {targetFramework}");
+
 #if DEBUG
-        this.simpleDllPath = @"..\..\..\..\TestAssembly\bin\Debug\net8.0\zTestAssembly.dll";
-        this.dependentDllPath = @"..\..\..\..\zTestDependentAssembly\bin\Debug\net8.0\zTestDependentAssembly.dll";
+        this.simpleDllPath = $@"..\..\..\..\TestAssembly\bin\Debug\{targetFramework}\zTestAssembly.dll";
+        this.dependentDllPath = $@"..\..\..\..\zTestDependentAssembly\bin\Debug\{targetFramework}\zTestDependentAssembly.dll";
 #else
-        this.simpleDllPath = @"..\..\..\..\TestAssembly\bin\Release\net8.0\zTestAssembly.dll";
-        this.dependentDllPath = @"..\..\..\..\zTestDependentAssembly\bin\Release\net8.0\zTestDependentAssembly.dll";
+        this.simpleDllPath = $@"..\..\..\..\TestAssembly\bin\Release\{targetFramework}\zTestAssembly.dll";
+        this.dependentDllPath = $@"..\..\..\..\zTestDependentAssembly\bin\Release\{targetFramework}\zTestDependentAssembly.dll";
 #endif
+    }
+
+    /// <summary>
+    /// Detects the target framework of the current assembly (net8.0, net10.0, etc.)
+    /// </summary>
+    private static string GetTargetFramework()
+    {
+        var targetFrameworkAttribute = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<System.Runtime.Versioning.TargetFrameworkAttribute>();
+        
+        if (targetFrameworkAttribute != null)
+        {
+            var frameworkName = targetFrameworkAttribute.FrameworkName;
+            // Format: ".NETCoreApp,Version=v10.0" -> "net10.0"
+            if (frameworkName.Contains("Version=v"))
+            {
+                var version = frameworkName.Split("Version=v")[1];
+                return $"net{version}";
+            }
+        }
+        
+        // Fallback to net10.0 if detection fails
+        return "net10.0";
     }
 
     #region Concurrent Loading Tests

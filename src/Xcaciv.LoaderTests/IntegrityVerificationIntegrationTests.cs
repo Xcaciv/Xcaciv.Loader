@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Security;
 using System.Security.Cryptography;
+using System.Reflection;
 
 using Xcaciv.Loader;
 
@@ -14,10 +15,15 @@ public class IntegrityVerificationIntegrationTests : IDisposable
     private readonly string tempDirectory;
     private readonly string testDllPath;
 
-    private string simpleDllPath = @"..\..\..\..\TestAssembly\bin\{1}\net8.0\zTestAssembly.dll";
+    private string simpleDllPath;
 
     public IntegrityVerificationIntegrationTests()
     {
+        // Detect the target framework at runtime
+        var targetFramework = GetTargetFramework();
+
+        // Build path using the detected framework
+        simpleDllPath = $@"..\..\..\..\TestAssembly\bin\{{1}}\{targetFramework}\zTestAssembly.dll";
 
 #if DEBUG
         this.simpleDllPath = simpleDllPath.Replace("{1}", "Debug");
@@ -42,6 +48,29 @@ public class IntegrityVerificationIntegrationTests : IDisposable
         {
             throw new Exception("Test assembly not found: " + sourceAssembly);
         }
+    }
+
+    /// <summary>
+    /// Detects the target framework of the current assembly (net8.0, net10.0, etc.)
+    /// </summary>
+    private static string GetTargetFramework()
+    {
+        var targetFrameworkAttribute = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<System.Runtime.Versioning.TargetFrameworkAttribute>();
+        
+        if (targetFrameworkAttribute != null)
+        {
+            var frameworkName = targetFrameworkAttribute.FrameworkName;
+            // Format: ".NETCoreApp,Version=v10.0" -> "net10.0"
+            if (frameworkName.Contains("Version=v"))
+            {
+                var version = frameworkName.Split("Version=v")[1];
+                return $"net{version}";
+            }
+        }
+        
+        // Fallback to net10.0 if detection fails
+        return "net10.0";
     }
 
     [Fact]

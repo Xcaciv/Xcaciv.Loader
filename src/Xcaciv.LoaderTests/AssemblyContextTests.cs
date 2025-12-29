@@ -13,25 +13,55 @@ namespace Xcaciv.Loader.Tests
     public class AssemblyContextTests
     {
         private ITestOutputHelper _testOutput;
-        private string simpleDllPath = @"..\..\..\..\TestAssembly\bin\{1}\net8.0\zTestAssembly.dll";
-        private string dependentDllPath = @"..\..\..\..\zTestDependentAssembly\bin\{1}\net8.0\zTestDependentAssembly.dll";
+        private string simpleDllPath;
+        private string dependentDllPath;
 
         public AssemblyContextTests(ITestOutputHelper output)
         {
             this._testOutput = output;
+            
+            // Detect the target framework at runtime
+            var targetFramework = GetTargetFramework();
+            this._testOutput.WriteLine($"Tests running on {targetFramework}");
+
+            var buildMode = "Debug"; // Default to Debug
+
 #if DEBUG
             this._testOutput.WriteLine("Tests in Debug mode");
-            this.simpleDllPath = simpleDllPath.Replace("{1}", "Debug");
-            this.dependentDllPath = dependentDllPath.Replace("{1}", "Debug");
 #else
-            this._testOutput.WriteLine("Tests in Release mode??");
-            this.simpleDllPath = simpleDllPath.Replace("{1}", "Release");
-            this.dependentDllPath = dependentDllPath.Replace("{1}", "Release");
+            this._testOutput.WriteLine("Tests in Release mode");
+            buildMode = "Release";
 #endif
+            // Build paths using the detected framework
+            this.simpleDllPath = $@"..\..\..\..\TestAssembly\bin\{buildMode}\{targetFramework}\zTestAssembly.dll";
+            this.dependentDllPath = $@"..\..\..\..\zTestDependentAssembly\bin\{buildMode}\{targetFramework}\zTestDependentAssembly.dll";
 
             // resolve absolute paths
             this.simpleDllPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, this.simpleDllPath));
             this.dependentDllPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, this.dependentDllPath));
+        }
+
+        /// <summary>
+        /// Detects the target framework of the current assembly (net8.0, net10.0, etc.)
+        /// </summary>
+        private static string GetTargetFramework()
+        {
+            var targetFrameworkAttribute = Assembly.GetExecutingAssembly()
+                .GetCustomAttribute<System.Runtime.Versioning.TargetFrameworkAttribute>();
+            
+            if (targetFrameworkAttribute != null)
+            {
+                var frameworkName = targetFrameworkAttribute.FrameworkName;
+                // Format: ".NETCoreApp,Version=v10.0" -> "net10.0"
+                if (frameworkName.Contains("Version=v"))
+                {
+                    var version = frameworkName.Split("Version=v")[1];
+                    return $"net{version}";
+                }
+            }
+            
+            // Fallback to net10.0 if detection fails
+            return "net10.0";
         }
 
         [Fact()]
