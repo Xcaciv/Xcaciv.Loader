@@ -1,5 +1,7 @@
 # Xcaciv.Loader
 
+[![Securability](https://localhost:3001/badge/10a3ad1d-30d9-43b6-8eb6-56a17d961323.svg)](https://localhost:3001/r/Xcaciv/Xcaciv.Loader)
+
 Sexy simple C# module for runtime loading of types from external assemblies.
 
 ```csharp
