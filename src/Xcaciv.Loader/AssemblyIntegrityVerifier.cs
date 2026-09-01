@@ -14,7 +14,7 @@ namespace Xcaciv.Loader;
 /// <para>When enabled, assemblies are verified against known hashes before loading.</para>
 /// <para>In learning mode, new assembly hashes are automatically stored for future verification.</para>
 /// </remarks>
-public class AssemblyIntegrityVerifier
+public sealed class AssemblyIntegrityVerifier
 {
     private readonly AssemblyHashStore hashStore;
     private readonly HashAlgorithmName algorithmName;
