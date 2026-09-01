@@ -43,27 +43,27 @@ public static class AssemblyPathValidator
     public static string SanitizeAssemblyPath(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path, nameof(path));
-        
+
         // Remove null bytes (common path traversal attack vector)
         path = path.Replace("\0", String.Empty);
-        
+
         // Normalize path separators to platform-specific separator
         path = path.Replace('/', Path.DirectorySeparatorChar);
         path = path.Replace('\\', Path.DirectorySeparatorChar);
-        
+
         // Remove double separators that could be used to bypass validation
         var doubleSeparator = $"{Path.DirectorySeparatorChar}{Path.DirectorySeparatorChar}";
         while (path.Contains(doubleSeparator))
         {
             path = path.Replace(doubleSeparator, Path.DirectorySeparatorChar.ToString());
         }
-        
+
         // Trim any leading or trailing whitespace and separators
         path = path.Trim().Trim(Path.DirectorySeparatorChar);
-        
+
         return path;
     }
-    
+
     /// <summary>
     /// Resolves a relative path to an absolute path relative to the application base directory.
     /// </summary>
@@ -88,14 +88,14 @@ public static class AssemblyPathValidator
     public static string ResolveRelativeToBase(string relativePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(relativePath, nameof(relativePath));
-        
+
         var basePath = AppDomain.CurrentDomain.BaseDirectory;
         var combinedPath = Path.Combine(basePath, relativePath);
-        
+
         // Normalize the path to handle any .. or . in the path
         return Path.GetFullPath(combinedPath);
     }
-    
+
     /// <summary>
     /// Performs basic heuristic checks to determine if a path appears safe for assembly loading.
     /// </summary>
@@ -131,26 +131,26 @@ public static class AssemblyPathValidator
         // Basic validation
         if (String.IsNullOrWhiteSpace(path))
             return false;
-        
+
         // Check for null bytes (path traversal attack vector)
         if (path.Contains('\0'))
             return false;
-        
+
         // Check for path traversal attempts
         if (path.Contains(".."))
             return false;
-        
+
         // Check for wildcard characters that might bypass validation
         if (path.Contains('*') || path.Contains('?'))
             return false;
-        
+
         // Check for potentially dangerous characters
         if (path.Contains('<') || path.Contains('>') || path.Contains('|'))
             return false;
-        
+
         return true;
     }
-    
+
     /// <summary>
     /// Validates that a path has an allowed assembly file extension (.dll or .exe).
     /// </summary>
@@ -173,13 +173,13 @@ public static class AssemblyPathValidator
     public static bool HasValidAssemblyExtension(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path, nameof(path));
-        
+
         var extension = Path.GetExtension(path);
-        
+
         return extension.Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
                extension.Equals(".exe", StringComparison.OrdinalIgnoreCase);
     }
-    
+
     /// <summary>
     /// Combines path validation, sanitization, and resolution into a single operation.
     /// This is the recommended method for processing user-provided assembly paths.
@@ -225,7 +225,7 @@ public static class AssemblyPathValidator
     public static string ValidateAndSanitize(string path, bool resolveRelativeToBase = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path, nameof(path));
-        
+
         // Step 1: Basic safety checks
         if (!IsSafePath(path))
         {
@@ -233,16 +233,16 @@ public static class AssemblyPathValidator
                 $"Path failed safety checks. The path contains potentially dangerous patterns: {path}",
                 nameof(path));
         }
-        
+
         // Step 2: Sanitize the path
         var sanitizedPath = SanitizeAssemblyPath(path);
-        
+
         // Step 3: Resolve to absolute path if requested
         if (resolveRelativeToBase && !Path.IsPathRooted(sanitizedPath))
         {
             sanitizedPath = ResolveRelativeToBase(sanitizedPath);
         }
-        
+
         // Step 4: Validate extension
         if (!HasValidAssemblyExtension(sanitizedPath))
         {
@@ -250,7 +250,7 @@ public static class AssemblyPathValidator
                 $"Path does not have a valid assembly extension (.dll or .exe): {sanitizedPath}",
                 nameof(path));
         }
-        
+
         return sanitizedPath;
     }
 }

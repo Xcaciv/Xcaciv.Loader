@@ -21,11 +21,11 @@ public class SecurityViolationTests
     public void VerifyPath_ForbiddenSystemDirectory_Strict_ThrowsSecurityException(string path)
     {
         // Arrange - Use STRICT security policy (Default doesn't block these)
-        
+
         // Act & Assert
-        var ex = Assert.Throws<SecurityException>(() => 
+        var ex = Assert.Throws<SecurityException>(() =>
             AssemblyContext.VerifyPath(path, "*", AssemblySecurityPolicy.Strict));
-        
+
         Assert.Contains("system directories", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -37,11 +37,11 @@ public class SecurityViolationTests
     public void VerifyPath_ForbiddenProgramFiles_Strict_ThrowsSecurityException(string path)
     {
         // Arrange - Use STRICT security policy (Default doesn't block these)
-        
+
         // Act & Assert
-        var ex = Assert.Throws<SecurityException>(() => 
+        var ex = Assert.Throws<SecurityException>(() =>
             AssemblyContext.VerifyPath(path, "*", AssemblySecurityPolicy.Strict));
-        
+
         Assert.Contains("system directories", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -52,11 +52,11 @@ public class SecurityViolationTests
     public void VerifyPath_ForbiddenWindowsDirectories_Strict_ThrowsSecurityException(string path)
     {
         // Arrange - Use strict security policy
-        
+
         // Act & Assert
-        var ex = Assert.Throws<SecurityException>(() => 
+        var ex = Assert.Throws<SecurityException>(() =>
             AssemblyContext.VerifyPath(path, "*", AssemblySecurityPolicy.Strict));
-        
+
         Assert.Contains("system directories", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -65,10 +65,10 @@ public class SecurityViolationTests
     {
         // Arrange
         var tempPath = Path.Combine(Path.GetTempPath(), "test.dll");
-        
+
         // Act
         var result = AssemblyContext.VerifyPath(tempPath, "*", AssemblySecurityPolicy.Default);
-        
+
         // Assert
         Assert.NotNull(result);
         Assert.Contains("test.dll", result);
@@ -79,10 +79,10 @@ public class SecurityViolationTests
     {
         // Arrange
         var tempPath = Path.Combine(Path.GetTempPath(), "test.dll");
-        
+
         // Act
         var result = AssemblyContext.VerifyPath(tempPath, "*", AssemblySecurityPolicy.Strict);
-        
+
         // Assert
         Assert.NotNull(result);
         Assert.Contains("test.dll", result);
@@ -99,12 +99,12 @@ public class SecurityViolationTests
     {
         // Arrange
         var fullPath = Path.GetFullPath(relativePath);
-        
+
         // Act & Assert
         // This should throw because the resolved path ends up in a forbidden directory
-        var ex = Assert.Throws<SecurityException>(() => 
+        var ex = Assert.Throws<SecurityException>(() =>
             AssemblyContext.VerifyPath(fullPath, "*", AssemblySecurityPolicy.Default));
-        
+
         Assert.Contains("system directories", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -114,11 +114,11 @@ public class SecurityViolationTests
         // Arrange
         var tempDir = Path.GetTempPath();
         var outsidePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "test.dll");
-        
+
         // Act & Assert
-        var ex = Assert.Throws<ArgumentOutOfRangeException>(() => 
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() =>
             AssemblyContext.VerifyPath(outsidePath, tempDir));
-        
+
         Assert.Contains("not within the restricted path", ex.Message);
     }
 
@@ -129,10 +129,10 @@ public class SecurityViolationTests
         var tempDir = Path.GetTempPath();
         var relativePath = "subdir\\test.dll";
         var fullPath = Path.Combine(tempDir, relativePath);
-        
+
         // Act
         var result = AssemblyContext.VerifyPath(fullPath, tempDir);
-        
+
         // Assert
         Assert.NotNull(result);
         Assert.Equal(Path.GetFullPath(fullPath), result);
@@ -147,15 +147,15 @@ public class SecurityViolationTests
     {
         // Arrange
         var testPath = Path.Combine(Path.GetTempPath(), "test.dll");
-        
+
         // Create a dummy file for testing
         File.WriteAllText(testPath, "dummy");
-        
+
         try
         {
             // Act
             using var context = new AssemblyContext(testPath, basePathRestriction: "*");
-            
+
             // The event should have been raised during construction
             // but we subscribed after, so let's test it properly
         }
@@ -164,7 +164,7 @@ public class SecurityViolationTests
             if (File.Exists(testPath))
                 File.Delete(testPath);
         }
-        
+
         // Assert - Constructor didn't throw
         Assert.True(true);
     }
@@ -174,20 +174,20 @@ public class SecurityViolationTests
     {
         // Arrange
         var testPath = Path.Combine(Path.GetTempPath(), "test.dll");
-        
+
         // Create a dummy file
         File.WriteAllText(testPath, "dummy");
-        
+
         try
         {
             // Act
             var context = new AssemblyContext(testPath, basePathRestriction: "*");
-            
+
             // Assert - Event was raised during construction, but we subscribed after
             // The important thing is the constructor succeeded with wildcard
             Assert.NotNull(context);
             Assert.Equal("*", context.BasePathRestriction);
-            
+
             context.Dispose();
         }
         finally
@@ -203,14 +203,14 @@ public class SecurityViolationTests
         // Arrange
         var tempDir = Path.GetTempPath();
         var testPath = Path.Combine(tempDir, "test.dll");
-        
+
         File.WriteAllText(testPath, "dummy");
-        
+
         try
         {
             // Act
             using var context = new AssemblyContext(testPath, basePathRestriction: tempDir);
-            
+
             // Assert
             Assert.NotEqual("*", context.BasePathRestriction);
             Assert.Equal(tempDir, context.BasePathRestriction);
@@ -236,11 +236,11 @@ public class SecurityViolationTests
     {
         // Arrange
         var path = Path.Combine(Path.GetTempPath(), filename);
-        
+
         // Act & Assert
-        var ex = Assert.Throws<SecurityException>(() => 
+        var ex = Assert.Throws<SecurityException>(() =>
             AssemblyContext.VerifyPath(path, "*"));
-        
+
         Assert.Contains("extension", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -253,10 +253,10 @@ public class SecurityViolationTests
     {
         // Arrange
         var path = Path.Combine(Path.GetTempPath(), filename);
-        
+
         // Act
         var result = AssemblyContext.VerifyPath(path, "*");
-        
+
         // Assert
         Assert.NotNull(result);
         Assert.Contains(filename.ToLower(), result.ToLower());
@@ -267,13 +267,13 @@ public class SecurityViolationTests
     {
         // Arrange
         var path = Path.Combine(Path.GetTempPath(), "testfile");
-        
+
         // Act & Assert - File without extension should be rejected
         // Actually, this might pass validation - let's check the implementation
         // The implementation checks if extension is not empty AND not .dll/.exe
         // So no extension means empty, which passes the first check
         var result = AssemblyContext.VerifyPath(path, "*");
-        
+
         // Assert - No exception because empty extension passes the check
         Assert.NotNull(result);
     }
@@ -289,18 +289,18 @@ public class SecurityViolationTests
         var systemPath = @"C:\Windows\System32\kernel32.dll";
         var tempDir = Path.GetTempPath();
         var testPath = Path.Combine(tempDir, "test.dll");
-        
+
         File.WriteAllText(testPath, "dummy");
-        
+
         try
         {
             using var context = new AssemblyContext(testPath, basePathRestriction: tempDir);
-            
+
             // Act & Assert
             // Try to verify a forbidden path
-            var ex = Assert.Throws<SecurityException>(() => 
+            var ex = Assert.Throws<SecurityException>(() =>
                 AssemblyContext.VerifyPath(systemPath, "*", AssemblySecurityPolicy.Strict));
-            
+
             // The SecurityViolation event is raised in LoadFromPath, not VerifyPath
             // So this test cannot validate the event through static method calls
         }
@@ -322,11 +322,11 @@ public class SecurityViolationTests
         var customDir = @"C:\CustomForbidden";
         var customPolicy = new AssemblySecurityPolicy(new[] { customDir });
         var testPath = Path.Combine(customDir, "test.dll");
-        
+
         // Act & Assert
-        var ex = Assert.Throws<SecurityException>(() => 
+        var ex = Assert.Throws<SecurityException>(() =>
             AssemblyContext.VerifyPath(testPath, "*", customPolicy));
-        
+
         Assert.Contains("system directories", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -336,10 +336,10 @@ public class SecurityViolationTests
         // Arrange
         var customDir = @"C:\MyPlugins";
         var testPath = Path.Combine(customDir, "test.dll");
-        
+
         // Act
         var result = AssemblyContext.VerifyPath(testPath, "*", AssemblySecurityPolicy.Default);
-        
+
         // Assert
         Assert.NotNull(result);
         Assert.Equal(Path.GetFullPath(testPath), result);
@@ -350,11 +350,11 @@ public class SecurityViolationTests
     {
         // Arrange - Strict policy has more forbidden directories than Default
         var syswow64Path = @"C:\Windows\SysWOW64\test.dll";
-        
+
         // Act & Assert
-        var ex = Assert.Throws<SecurityException>(() => 
+        var ex = Assert.Throws<SecurityException>(() =>
             AssemblyContext.VerifyPath(syswow64Path, "*", AssemblySecurityPolicy.Strict));
-        
+
         Assert.Contains("system directories", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -367,11 +367,11 @@ public class SecurityViolationTests
     {
         // Arrange - Use STRICT policy to block System32
         var systemPath = @"C:\Windows\System32\test.dll";
-        
+
         // Act & Assert
-        var ex = Assert.Throws<SecurityException>(() => 
+        var ex = Assert.Throws<SecurityException>(() =>
             new AssemblyContext(systemPath, basePathRestriction: "*", securityPolicy: AssemblySecurityPolicy.Strict));
-        
+
         Assert.Contains("system directories", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -381,17 +381,17 @@ public class SecurityViolationTests
         // Arrange
         var tempDir = Path.GetTempPath();
         var testPath = Path.Combine(tempDir, "test.dll");
-        
+
         File.WriteAllText(testPath, "dummy");
-        
+
         try
         {
             // Act
             using var context = new AssemblyContext(
-                testPath, 
+                testPath,
                 basePathRestriction: tempDir,
                 securityPolicy: AssemblySecurityPolicy.Strict);
-            
+
             // Assert
             Assert.NotNull(context);
             Assert.Equal(testPath, context.FilePath);

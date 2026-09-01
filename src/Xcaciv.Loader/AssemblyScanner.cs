@@ -46,7 +46,7 @@ public static class AssemblyScanner
             .SelectMany(assembly => GetTypesFromAssembly(assembly))
             .Where(type => typeof(T).IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract);
     }
-    
+
     /// <summary>
     /// Gets types from a specific assembly that implement or extend type T.
     /// Excludes interfaces and abstract classes from the results.
@@ -72,11 +72,11 @@ public static class AssemblyScanner
     public static IEnumerable<Type> GetTypes<T>(Assembly assembly)
     {
         ArgumentNullException.ThrowIfNull(assembly, nameof(assembly));
-        
+
         return GetTypesFromAssembly(assembly)
             .Where(type => typeof(T).IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract);
     }
-    
+
     /// <summary>
     /// Gets types from a specific assembly, filtering out compiler-generated types.
     /// </summary>

@@ -31,7 +31,7 @@ public class IntegrityVerificationIntegrationTests : IDisposable
 
         tempDirectory = Path.Combine(Path.GetTempPath(), $"LoaderTests_{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempDirectory);
-        
+
         // Copy test assembly
         testDllPath = Path.Combine(tempDirectory, "zTestAssembly.dll");
 
@@ -161,7 +161,7 @@ public class IntegrityVerificationIntegrationTests : IDisposable
                 testDllPath,
                 basePathRestriction: "*",
                 integrityVerifier: verifier);
-            
+
             // Must actually load the assembly to trigger verification
             context.CreateInstance("Class1");
         });
@@ -222,7 +222,7 @@ public class IntegrityVerificationIntegrationTests : IDisposable
                 basePathRestriction: "*",
                 integrityVerifier: verifier);
 
-           context.CreateInstance("Class1");
+            context.CreateInstance("Class1");
         });
     }
 
@@ -284,7 +284,7 @@ public class IntegrityVerificationIntegrationTests : IDisposable
         // Create second test file
         var testDll2Path = Path.Combine(tempDirectory, "TestAssembly2.dll");
         File.Copy(testDllPath, testDll2Path, true);
-        
+
         // Modify it slightly
         File.AppendAllText(testDll2Path, " ");
 
@@ -383,7 +383,7 @@ public class IntegrityVerificationIntegrationTests : IDisposable
         Assert.NotEqual(hash256, hash384);
         Assert.NotEqual(hash384, hash512);
         Assert.NotEqual(hash256, hash512);
-        
+
         // Verify lengths
         Assert.Equal(32, Convert.FromBase64String(hash256).Length);
         Assert.Equal(48, Convert.FromBase64String(hash384).Length);

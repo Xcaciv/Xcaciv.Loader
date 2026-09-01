@@ -53,16 +53,16 @@ namespace Xcaciv.Loader.Tests
         {
             var expectedPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, simpleDllPath));
             var basePath = System.IO.Path.GetDirectoryName(expectedPath) ?? String.Empty;
-            var context = new Xcaciv.Loader.AssemblyContext(simpleDllPath, basePathRestriction:basePath);
+            var context = new Xcaciv.Loader.AssemblyContext(simpleDllPath, basePathRestriction: basePath);
 
-            Xunit.Assert.Equal(expectedPath, context.FilePath);       
+            Xunit.Assert.Equal(expectedPath, context.FilePath);
         }
 
         [Fact()]
         public void LoadOutOfRangeAssembly_Test()
         {
             var expectedPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, simpleDllPath));
-            
+
 
             Xunit.Assert.Throws<ArgumentOutOfRangeException>(() => new Xcaciv.Loader.AssemblyContext(simpleDllPath));
         }
@@ -82,7 +82,7 @@ namespace Xcaciv.Loader.Tests
         {
             var actual = String.Empty;
 
-            using (var context = new Xcaciv.Loader.AssemblyContext(simpleDllPath, basePathRestriction:"*"))
+            using (var context = new Xcaciv.Loader.AssemblyContext(simpleDllPath, basePathRestriction: "*"))
             {
                 IClass1? class1 = context.CreateInstance("Class1") as IClass1;
                 actual = class1?.Stuff("input text here") ?? String.Empty;
@@ -108,7 +108,7 @@ namespace Xcaciv.Loader.Tests
         public void UsingFactory_FromPath_Unloads()
         {
             var actual = UseFactory(simpleDllPath);
-            
+
             // collect to demonstrate unload
             GC.Collect();
             GC.WaitForPendingFinalizers();

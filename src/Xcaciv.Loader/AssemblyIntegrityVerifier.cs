@@ -19,39 +19,39 @@ public class AssemblyIntegrityVerifier
     private readonly AssemblyHashStore hashStore;
     private readonly HashAlgorithmName algorithmName;
     private readonly bool learningMode;
-    
+
     /// <summary>
     /// Gets whether integrity verification is enabled
     /// </summary>
     public bool Enabled { get; init; }
-    
+
     /// <summary>
     /// Gets whether learning mode is enabled (automatically store new hashes)
     /// </summary>
     public bool LearningMode => learningMode;
-    
+
     /// <summary>
     /// Gets the hash algorithm being used
     /// </summary>
     public HashAlgorithmName Algorithm => algorithmName;
-    
+
     /// <summary>
     /// Gets the hash store managing assembly hashes
     /// </summary>
     public AssemblyHashStore HashStore => hashStore;
-    
+
     /// <summary>
     /// Event raised when a hash mismatch is detected
     /// Parameters: (filePath, expectedHash, actualHash)
     /// </summary>
     public event Action<string, string, string>? HashMismatchDetected;
-    
+
     /// <summary>
     /// Event raised when a new assembly hash is learned
     /// Parameters: (filePath, hash)
     /// </summary>
     public event Action<string, string>? HashLearned;
-    
+
     /// <summary>
     /// Creates a new disabled integrity verifier (no verification performed)
     /// </summary>
@@ -65,7 +65,7 @@ public class AssemblyIntegrityVerifier
         this.algorithmName = HashAlgorithmName.SHA256;
         this.hashStore = new AssemblyHashStore();
     }
-    
+
     /// <summary>
     /// Creates a new integrity verifier with specified configuration
     /// </summary>
@@ -91,8 +91,8 @@ public class AssemblyIntegrityVerifier
     /// </code>
     /// </example>
     public AssemblyIntegrityVerifier(
-        bool enabled, 
-        bool learningMode = true, 
+        bool enabled,
+        bool learningMode = true,
         HashAlgorithmName algorithm = default,
         AssemblyHashStore? hashStore = null)
     {
@@ -101,7 +101,7 @@ public class AssemblyIntegrityVerifier
         this.algorithmName = algorithm == default ? HashAlgorithmName.SHA256 : algorithm;
         this.hashStore = hashStore ?? new AssemblyHashStore();
     }
-    
+
     /// <summary>
     /// Verifies the integrity of an assembly file
     /// </summary>
@@ -122,16 +122,16 @@ public class AssemblyIntegrityVerifier
     {
         if (!Enabled)
             return;
-        
+
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
-        
+
         if (!File.Exists(filePath))
         {
             throw new FileNotFoundException($"Assembly file not found: {filePath}", filePath);
         }
-        
+
         var actualHash = ComputeHash(filePath);
-        
+
         if (hashStore.TryGetHash(filePath, out var expectedHash))
         {
             // Hash exists - verify it matches
@@ -163,7 +163,7 @@ public class AssemblyIntegrityVerifier
             }
         }
     }
-    
+
     /// <summary>
     /// Computes the hash of a file
     /// </summary>
@@ -174,14 +174,14 @@ public class AssemblyIntegrityVerifier
     public string ComputeHash(string filePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
-        
+
         if (!File.Exists(filePath))
         {
             throw new FileNotFoundException($"File not found: {filePath}", filePath);
         }
-        
+
         using var stream = File.OpenRead(filePath);
-        
+
         byte[] hashBytes = algorithmName.Name switch
         {
             "SHA256" => SHA256.HashData(stream),
@@ -189,10 +189,10 @@ public class AssemblyIntegrityVerifier
             "SHA512" => SHA512.HashData(stream),
             _ => throw new NotSupportedException($"Hash algorithm not supported: {algorithmName.Name}")
         };
-        
+
         return Convert.ToBase64String(hashBytes);
     }
-    
+
     /// <summary>
     /// Pre-computes and stores the hash for an assembly
     /// </summary>
@@ -205,11 +205,11 @@ public class AssemblyIntegrityVerifier
     public void TrustAssembly(string filePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
-        
+
         var hash = ComputeHash(filePath);
         hashStore.AddOrUpdate(filePath, hash);
     }
-    
+
     /// <summary>
     /// Removes trust for an assembly
     /// </summary>
@@ -219,10 +219,10 @@ public class AssemblyIntegrityVerifier
     {
         if (String.IsNullOrWhiteSpace(filePath))
             return false;
-        
+
         return hashStore.Remove(filePath);
     }
-    
+
     /// <summary>
     /// Checks if an assembly is trusted (has a stored hash)
     /// </summary>
@@ -232,7 +232,7 @@ public class AssemblyIntegrityVerifier
     {
         if (String.IsNullOrWhiteSpace(filePath))
             return false;
-        
+
         return hashStore.TryGetHash(filePath, out _);
     }
 }

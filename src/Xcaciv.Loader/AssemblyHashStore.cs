@@ -29,7 +29,7 @@ public class AssemblyHashStore
 {
     private readonly Dictionary<string, string> hashes = new();
     private readonly object lockObject = new();
-    
+
     /// <summary>
     /// Gets the number of hashes currently stored
     /// </summary>
@@ -43,7 +43,7 @@ public class AssemblyHashStore
             }
         }
     }
-    
+
     /// <summary>
     /// Adds or updates a hash for the specified file path
     /// </summary>
@@ -58,15 +58,15 @@ public class AssemblyHashStore
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
         ArgumentException.ThrowIfNullOrWhiteSpace(hash, nameof(hash));
-        
+
         var normalizedPath = NormalizePath(filePath);
-        
+
         lock (lockObject)
         {
             hashes[normalizedPath] = hash;
         }
     }
-    
+
     /// <summary>
     /// Attempts to get the hash for the specified file path
     /// </summary>
@@ -84,15 +84,15 @@ public class AssemblyHashStore
             hash = null;
             return false;
         }
-        
+
         var normalizedPath = NormalizePath(filePath);
-        
+
         lock (lockObject)
         {
             return hashes.TryGetValue(normalizedPath, out hash);
         }
     }
-    
+
     /// <summary>
     /// Removes the hash for the specified file path
     /// </summary>
@@ -106,15 +106,15 @@ public class AssemblyHashStore
     {
         if (String.IsNullOrWhiteSpace(filePath))
             return false;
-        
+
         var normalizedPath = NormalizePath(filePath);
-        
+
         lock (lockObject)
         {
             return hashes.Remove(normalizedPath);
         }
     }
-    
+
     /// <summary>
     /// Removes all hashes from the store
     /// </summary>
@@ -125,7 +125,7 @@ public class AssemblyHashStore
             hashes.Clear();
         }
     }
-    
+
     /// <summary>
     /// Saves all hashes to a CSV file (comma-delimited: path,hash)
     /// </summary>
@@ -141,19 +141,19 @@ public class AssemblyHashStore
     public void SaveToFile(string filePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
-        
+
         Dictionary<string, string> snapshot;
         lock (lockObject)
         {
             snapshot = new Dictionary<string, string>(hashes);
         }
-        
+
         using var writer = new StreamWriter(filePath, false);
-        
+
         // Write header
         writer.WriteLine("# Assembly Integrity Hash Store");
         writer.WriteLine("# Format: FilePath,Hash");
-        
+
         // Write each hash entry
         foreach (var kvp in snapshot)
         {
@@ -162,7 +162,7 @@ public class AssemblyHashStore
             writer.WriteLine($"{escapedPath},{escapedHash}");
         }
     }
-    
+
     /// <summary>
     /// Loads hashes from a CSV file, replacing existing hashes
     /// </summary>
@@ -178,38 +178,38 @@ public class AssemblyHashStore
     public void LoadFromFile(string filePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
-        
+
         if (!File.Exists(filePath))
         {
             throw new FileNotFoundException($"Hash store file not found: {filePath}", filePath);
         }
-        
+
         var loadedHashes = new Dictionary<string, string>();
-        
+
         using (var reader = new StreamReader(filePath))
         {
             string? line;
             int lineNumber = 0;
-            
+
             while ((line = reader.ReadLine()) is not null)
             {
                 lineNumber++;
-                
+
                 // Skip empty lines and comments
                 if (String.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith('#'))
                     continue;
-                
+
                 var parts = ParseCsvLine(line);
-                
+
                 if (parts.Length != 2)
                 {
                     throw new FormatException(
                         $"Invalid format at line {lineNumber}: Expected 'path,hash' but got {parts.Length} fields");
                 }
-                
+
                 var path = parts[0].Trim();
                 var hash = parts[1].Trim();
-                
+
                 if (String.IsNullOrWhiteSpace(path) || String.IsNullOrWhiteSpace(hash))
                 {
                     throw new FormatException(
@@ -229,7 +229,7 @@ public class AssemblyHashStore
             }
         }
     }
-    
+
     /// <summary>
     /// Merges hashes from a CSV file with existing hashes
     /// </summary>
@@ -247,38 +247,38 @@ public class AssemblyHashStore
     public void MergeFromFile(string filePath, bool overwriteExisting = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
-        
+
         if (!File.Exists(filePath))
         {
             throw new FileNotFoundException($"Hash store file not found: {filePath}", filePath);
         }
-        
+
         var loadedHashes = new Dictionary<string, string>();
-        
+
         using (var reader = new StreamReader(filePath))
         {
             string? line;
             int lineNumber = 0;
-            
+
             while ((line = reader.ReadLine()) is not null)
             {
                 lineNumber++;
-                
+
                 // Skip empty lines and comments
                 if (String.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith('#'))
                     continue;
-                
+
                 var parts = ParseCsvLine(line);
-                
+
                 if (parts.Length != 2)
                 {
                     throw new FormatException(
                         $"Invalid format at line {lineNumber}: Expected 'path,hash' but got {parts.Length} fields");
                 }
-                
+
                 var path = parts[0].Trim();
                 var hash = parts[1].Trim();
-                
+
                 if (String.IsNullOrWhiteSpace(path) || String.IsNullOrWhiteSpace(hash))
                 {
                     throw new FormatException(
@@ -297,7 +297,7 @@ public class AssemblyHashStore
             }
         }
     }
-    
+
     /// <summary>
     /// Gets all file paths that have stored hashes
     /// </summary>
@@ -313,7 +313,7 @@ public class AssemblyHashStore
             return hashes.Keys.ToArray();
         }
     }
-    
+
     /// <summary>
     /// Normalizes file path for consistent storage and lookup
     /// </summary>
@@ -328,7 +328,7 @@ public class AssemblyHashStore
     {
         return Path.GetFullPath(filePath);
     }
-    
+
     /// <summary>
     /// Escapes a field for CSV format (handles commas and quotes)
     /// </summary>
@@ -341,7 +341,7 @@ public class AssemblyHashStore
         }
         return field;
     }
-    
+
     /// <summary>
     /// Parses a CSV line handling quoted fields
     /// </summary>
@@ -350,11 +350,11 @@ public class AssemblyHashStore
         var result = new List<string>();
         var currentField = new System.Text.StringBuilder();
         bool inQuotes = false;
-        
+
         for (int i = 0; i < line.Length; i++)
         {
             char c = line[i];
-            
+
             if (c == '"')
             {
                 if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
@@ -380,10 +380,10 @@ public class AssemblyHashStore
                 currentField.Append(c);
             }
         }
-        
+
         // Add last field
         result.Add(currentField.ToString());
-        
+
         return result.ToArray();
     }
 }

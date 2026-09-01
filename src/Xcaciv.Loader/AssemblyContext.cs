@@ -29,19 +29,19 @@ public class AssemblyContext : IAssemblyContext
     /// Used by disposal - tracks whether Dispose has been called
     /// </summary>
     private bool disposed;
-    
+
     /// <summary>
     /// Used to synchronize access to resources
     /// </summary>
     private readonly object syncLock = new();
-    
+
     /// <summary>
     /// Used for async disposal - cancellation token source for async operations
     /// </summary>
     private readonly CancellationTokenSource disposalTokenSource = new();
 
     // Event handlers for audit trail and transparency (SSEM compliance)
-    
+
     /// <summary>
     /// Raised when an assembly is successfully loaded into the context.
     /// Provides an audit trail of assembly loading operations for security and diagnostic purposes.
@@ -64,7 +64,7 @@ public class AssemblyContext : IAssemblyContext
     /// </code>
     /// </remarks>
     public event Action<string, string, Version?>? AssemblyLoaded;
-    
+
     /// <summary>
     /// Raised when assembly loading fails.
     /// Provides transparency for troubleshooting and monitors for potential security issues.
@@ -88,7 +88,7 @@ public class AssemblyContext : IAssemblyContext
     /// </code>
     /// </remarks>
     public event Action<string, Exception>? AssemblyLoadFailed;
-    
+
     /// <summary>
     /// Raised when an assembly is successfully unloaded from the context.
     /// Provides transparency for resource management and diagnostic purposes.
@@ -114,7 +114,7 @@ public class AssemblyContext : IAssemblyContext
     /// </code>
     /// </remarks>
     public event Action<string, bool>? AssemblyUnloaded;
-    
+
     /// <summary>
     /// Raised when a security violation is detected during assembly loading operations.
     /// Provides accountability for security events and enables security monitoring.
@@ -146,7 +146,7 @@ public class AssemblyContext : IAssemblyContext
     /// </code>
     /// </remarks>
     public event Action<string, string>? SecurityViolation;
-    
+
     /// <summary>
     /// Raised when a dependency assembly is successfully resolved and loaded.
     /// Provides transparency for dependency resolution and aids in troubleshooting.
@@ -169,7 +169,7 @@ public class AssemblyContext : IAssemblyContext
     /// </code>
     /// </remarks>
     public event Action<string, string>? DependencyResolved;
-    
+
     /// <summary>
     /// Raised when wildcard path restriction (*) is used during context creation.
     /// This is a security warning event indicating unrestricted assembly loading.
@@ -279,32 +279,32 @@ public class AssemblyContext : IAssemblyContext
     /// full assembly file path
     /// </summary>
     public string FilePath { get; private set; }
-    
+
     /// <summary>
     /// name for loading assembly
     /// </summary>
     private AssemblyName? assemblyName;
-    
+
     /// <summary>
     /// string name for reference
     /// </summary>
     public string FullAssemblyName => this.assemblyName?.FullName ?? String.Empty;
-    
+
     /// <summary>
     /// instance for assembly loading
     /// </summary>
     private AssemblyLoadContext? loadContext = null;
-    
+
     /// <summary>
     /// indicator that assembly is loaded
     /// </summary>
     private bool isLoaded = false;
-    
+
     /// <summary>
     /// instance of assembly reflection
     /// </summary>
     private Assembly? assembly;
-    
+
     /// <summary>
     /// Enables or disables strict directory restriction mode.
     /// When enabled, additional system directories are restricted from loading assemblies.
@@ -323,7 +323,7 @@ public class AssemblyContext : IAssemblyContext
         System.Diagnostics.Debug.WriteLine(
             "Warning: SetStrictDirectoryRestriction is deprecated. Use AssemblySecurityPolicy instead.");
     }
-    
+
     /// <summary>
     /// Gets whether strict directory restriction mode is enabled
     /// </summary>
@@ -397,21 +397,21 @@ public class AssemblyContext : IAssemblyContext
     /// <exception cref="SecurityException">Thrown when path validation fails or points to a restricted directory</exception>
     /// <exception cref="TimeoutException">Thrown when assembly loading exceeds <see cref="LoadTimeout"/> (default 30 seconds)</exception>
     public AssemblyContext(
-        string filePath, 
-        string? fullName = null, 
-        bool isCollectible = true, 
+        string filePath,
+        string? fullName = null,
+        bool isCollectible = true,
         string basePathRestriction = ".",
         AssemblySecurityPolicy? securityPolicy = null,
         AssemblyIntegrityVerifier? integrityVerifier = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
-        
+
         this.SecurityPolicy = securityPolicy ?? AssemblySecurityPolicy.Default;
         this.IntegrityVerifier = integrityVerifier;
         this.BasePathRestriction = basePathRestriction;
         this.FilePath = VerifyPath(filePath, this.BasePathRestriction, this.SecurityPolicy);
         this.SetLoadContext(fullName ?? String.Empty, isCollectible);
-        
+
         // Raise security warning if wildcard is used
         if (basePathRestriction == "*")
         {
@@ -442,14 +442,14 @@ public class AssemblyContext : IAssemblyContext
     /// </param>
     /// <exception cref="ArgumentNullException">Thrown when assemblyName is null</exception>
     public AssemblyContext(
-        AssemblyName assemblyName, 
-        bool isCollectible = true, 
+        AssemblyName assemblyName,
+        bool isCollectible = true,
         string basePathRestriction = ".",
         AssemblySecurityPolicy? securityPolicy = null,
-        AssemblyIntegrityVerifier? integrityVerifier = null) 
+        AssemblyIntegrityVerifier? integrityVerifier = null)
     {
         ArgumentNullException.ThrowIfNull(assemblyName, nameof(assemblyName));
-        
+
         this.FilePath = String.Empty;
         this.SecurityPolicy = securityPolicy ?? AssemblySecurityPolicy.Default;
         this.IntegrityVerifier = integrityVerifier;
@@ -457,13 +457,13 @@ public class AssemblyContext : IAssemblyContext
         this.assemblyName = assemblyName;
         this.SetLoadContext(this.assemblyName.FullName, isCollectible);
     }
-    
+
     /// <summary>
     /// Sets up the load context for the assembly
     /// </summary>
     /// <param name="fullName"></param>
     /// <param name="isCollectible"></param>
-    protected void SetLoadContext(string fullName, bool isCollectible) 
+    protected void SetLoadContext(string fullName, bool isCollectible)
     {
         loadContext = new AssemblyLoadContext(fullName, isCollectible);
         this.loadContext.Resolving += LoadContext_Resolving;
@@ -555,7 +555,7 @@ public class AssemblyContext : IAssemblyContext
             }
         }
     }
-    
+
     /// <summary>
     /// resolve assembly when not immediately found (not folder adjacent or GAC)
     /// </summary>
@@ -590,24 +590,24 @@ public class AssemblyContext : IAssemblyContext
         {
             // Verify the resolved path against security restrictions
             var verifiedPath = VerifyPath(path, "*", this.SecurityPolicy);
-            
+
             // Preflight: inspect metadata for emit/expressions indicators under strict policy
             if (this.SecurityPolicy.StrictMode)
             {
                 var preflight = AssemblyPreflightAnalyzer.Analyze(verifiedPath);
                 if (preflight.HasAnyIndicators)
                 {
-                    var reason = preflight.Indicators.Count > 0 
+                    var reason = preflight.Indicators.Count > 0
                         ? String.Join(", ", preflight.Indicators)
                         : "Preflight detected Reflection.Emit or Expressions.Compile";
                     SecurityViolation?.Invoke(verifiedPath, $"Preflight policy violation: {reason}");
                     throw new SecurityException("Preflight policy violation under strict policy: Reflection.Emit/LINQ Compile detected.");
                 }
             }
-            
+
             // Verify assembly integrity if enabled
             IntegrityVerifier?.VerifyIntegrity(verifiedPath);
-            
+
             return context.LoadFromAssemblyPath(verifiedPath);
         }
         catch (SecurityException ex)
@@ -642,7 +642,7 @@ public class AssemblyContext : IAssemblyContext
             throw new InvalidOperationException("Load context is not set. Make sure initialization was completed successfully.");
         }
     }
-    
+
     /// <summary>
     /// Validates that the instance hasn't been disposed
     /// </summary>
@@ -654,7 +654,7 @@ public class AssemblyContext : IAssemblyContext
             throw new ObjectDisposedException(GetType().Name, "This AssemblyContext instance has been disposed.");
         }
     }
-    
+
     /// <summary>
     /// Loads an assembly from its file path
     /// </summary>
@@ -666,12 +666,12 @@ public class AssemblyContext : IAssemblyContext
     {
         ThrowIfDisposed();
         ValidateLoadContext();
-        
+
         if (String.IsNullOrEmpty(this.FilePath))
         {
             throw new InvalidOperationException("Cannot load assembly: File path is not set");
         }
-        
+
         try
         {
             if (!File.Exists(this.FilePath))
@@ -680,26 +680,26 @@ public class AssemblyContext : IAssemblyContext
                 AssemblyLoadFailed?.Invoke(this.FilePath, ex);
                 throw ex;
             }
-            
+
             // Preflight: inspect metadata for emit/expressions indicators under strict policy
             if (this.SecurityPolicy.StrictMode)
             {
                 var preflight = AssemblyPreflightAnalyzer.Analyze(this.FilePath);
                 if (preflight.HasAnyIndicators)
                 {
-                    var reason = preflight.Indicators.Count > 0 
+                    var reason = preflight.Indicators.Count > 0
                         ? String.Join(", ", preflight.Indicators)
                         : "Preflight detected Reflection.Emit or Expressions.Compile";
                     SecurityViolation?.Invoke(this.FilePath, $"Preflight policy violation: {reason}");
                     throw new SecurityException("Preflight policy violation under strict policy: Reflection.Emit/LINQ Compile detected.");
                 }
             }
-            
+
             // Verify assembly integrity if enabled
             IntegrityVerifier?.VerifyIntegrity(this.FilePath);
-            
+
             Assembly? loadedAssembly;
-            
+
             // Apply timeout protection if enabled
             if (LoadTimeout == Timeout.InfiniteTimeSpan)
             {
@@ -711,19 +711,19 @@ public class AssemblyContext : IAssemblyContext
                 // Timeout enabled - wrap in Task with cancellation
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(disposalTokenSource.Token);
                 cts.CancelAfter(LoadTimeout);
-                
+
                 try
                 {
-                    var loadTask = Task.Run(() => 
-                        this.loadContext!.LoadFromAssemblyPath(this.FilePath), 
+                    var loadTask = Task.Run(() =>
+                        this.loadContext!.LoadFromAssemblyPath(this.FilePath),
                         cts.Token);
-                    
+
                     if (!loadTask.Wait(LoadTimeout, cts.Token))
                     {
                         throw new TimeoutException(
                             $"Assembly loading timed out after {LoadTimeout.TotalSeconds:F1} seconds: {this.FilePath}");
                     }
-                    
+
                     loadedAssembly = loadTask.Result;
                 }
                 catch (OperationCanceledException) when (cts.Token.IsCancellationRequested && !disposalTokenSource.Token.IsCancellationRequested)
@@ -736,7 +736,7 @@ public class AssemblyContext : IAssemblyContext
                 {
                     // Task.Wait wraps OperationCanceledException in AggregateException
                     throw new TimeoutException(
-                        $"Assembly loading was cancelled due to timeout ({LoadTimeout.TotalSeconds:F1}s): {this.FilePath}", 
+                        $"Assembly loading was cancelled due to timeout ({LoadTimeout.TotalSeconds:F1}s): {this.FilePath}",
                         ex.InnerException);
                 }
                 catch (AggregateException ex)
@@ -756,11 +756,11 @@ public class AssemblyContext : IAssemblyContext
                 }
                 this.assemblyName = loadedAssembly.GetName();
                 this.isLoaded = true;
-                
+
                 // Raise success event
                 AssemblyLoaded?.Invoke(
-                    this.FilePath, 
-                    loadedAssembly.FullName ?? "Unknown", 
+                    this.FilePath,
+                    loadedAssembly.FullName ?? "Unknown",
                     loadedAssembly.GetName().Version);
             }
             return loadedAssembly;
@@ -788,7 +788,7 @@ public class AssemblyContext : IAssemblyContext
             throw new BadImageFormatException($"The file at path '{this.FilePath}' is not a valid assembly", ex);
         }
     }
-    
+
     /// <summary>
     /// Loads an assembly by its name
     /// </summary>
@@ -800,12 +800,12 @@ public class AssemblyContext : IAssemblyContext
     {
         ThrowIfDisposed();
         ValidateLoadContext();
-        
+
         if (this.assemblyName is null)
         {
             throw new InvalidOperationException("Cannot load assembly: Assembly name is not set");
         }
-        
+
         try
         {
             var loadedAssembly = this.loadContext!.LoadFromAssemblyName(this.assemblyName);
@@ -819,11 +819,11 @@ public class AssemblyContext : IAssemblyContext
                 }
                 this.FilePath = VerifyPath(loadedAssembly.Location, "*", this.SecurityPolicy);
                 this.isLoaded = true;
-                
+
                 // Raise success event
                 AssemblyLoaded?.Invoke(
-                    this.FilePath, 
-                    loadedAssembly.FullName ?? "Unknown", 
+                    this.FilePath,
+                    loadedAssembly.FullName ?? "Unknown",
                     loadedAssembly.GetName().Version);
             }
             return loadedAssembly;
@@ -839,7 +839,7 @@ public class AssemblyContext : IAssemblyContext
             throw new ArgumentException($"Invalid assembly name: {this.assemblyName.FullName}", ex);
         }
     }
-    
+
     /// <summary>
     /// use the framework's AssemblyLoadContext to provide loading of assembly that 
     /// can be unloaded later
@@ -881,7 +881,7 @@ public class AssemblyContext : IAssemblyContext
         this.assemblyName = assembly?.GetName();
         return assembly;
     }
-    
+
     /// <summary>
     /// Attempts to create an instance from the current assembly given a class assemblyName.
     /// If the class does not exist in this assembly a null object is returned.
@@ -894,7 +894,7 @@ public class AssemblyContext : IAssemblyContext
     public object? CreateInstance(string className)
     {
         ThrowIfDisposed();
-        
+
         ArgumentException.ThrowIfNullOrWhiteSpace(className, nameof(className));
 
         if (!File.Exists(this.FilePath))
@@ -939,7 +939,7 @@ public class AssemblyContext : IAssemblyContext
             throw new InvalidOperationException($"Failed to create instance of '{className}': Type could not be loaded", ex);
         }
     }
-    
+
     /// <summary>
     /// Attempts to create an instance from the current assembly given a class name.
     /// If the class does not exist in this assembly a null object is returned.
@@ -953,7 +953,7 @@ public class AssemblyContext : IAssemblyContext
     public T CreateInstance<T>(string className)
     {
         ThrowIfDisposed();
-        
+
         ArgumentException.ThrowIfNullOrWhiteSpace(className, nameof(className));
 
         if (!File.Exists(this.FilePath))
@@ -966,13 +966,13 @@ public class AssemblyContext : IAssemblyContext
         try
         {
             if (!className.Contains('.')) className = '.' + className;
-            
+
             var assembly = this.LoadAssembly();
             if (assembly is null)
             {
                 throw new InvalidOperationException($"Failed to load assembly for creating instance of '{className}'");
             }
-            
+
             var instanceType = assembly.GetTypes()?.FirstOrDefault(o => o.FullName?.EndsWith(className) == true);
 
             if (instanceType is null)
@@ -1003,7 +1003,7 @@ public class AssemblyContext : IAssemblyContext
             throw new InvalidOperationException($"Failed to create instance of '{className}': Cannot access constructor", ex);
         }
     }
-    
+
     /// <summary>
     /// Attempts to create an instance from the current assembly given a class Type.
     /// If the class does not exist in this assembly a null object is returned
@@ -1017,7 +1017,7 @@ public class AssemblyContext : IAssemblyContext
     public T CreateInstance<T>(Type instanceType)
     {
         ThrowIfDisposed();
-        
+
         if (instanceType is null) throw new ArgumentNullException(nameof(instanceType), "Instance type cannot be null");
 
         try
@@ -1041,7 +1041,7 @@ public class AssemblyContext : IAssemblyContext
             throw new InvalidOperationException($"Failed to create instance of '{instanceType.FullName}': Cannot access constructor", ex);
         }
     }
-    
+
     /// <summary>
     /// use the activator
     /// compartmentalizes the call for exception/suppression
@@ -1053,13 +1053,13 @@ public class AssemblyContext : IAssemblyContext
     public static T ActivateInstance<T>(Type instanceType)
     {
         ArgumentNullException.ThrowIfNull(instanceType);
-        
+
         var instance = Activator.CreateInstance(instanceType);
         if (instance is null)
         {
             throw new InvalidOperationException($"Failed to create instance of {instanceType.FullName}");
         }
-        
+
         return (T)instance;
     }
 
@@ -1073,7 +1073,7 @@ public class AssemblyContext : IAssemblyContext
         ThrowIfDisposed();
         return this.LoadAssembly()?.GetTypes();
     }
-    
+
     /// <summary>
     /// list types that implement or extend a base type
     /// </summary>
@@ -1085,7 +1085,7 @@ public class AssemblyContext : IAssemblyContext
         ThrowIfDisposed();
         return this.LoadAssembly()?.GetTypes()?.Where(o => baseType.IsAssignableFrom(o) && !o.IsInterface && !o.IsAbstract);
     }
-    
+
     /// <summary>
     /// list types that implement or extend a base type T
     /// </summary>
@@ -1112,7 +1112,7 @@ public class AssemblyContext : IAssemblyContext
     {
         return AssemblyScanner.GetLoadedTypes<T>();
     }
-    
+
     /// <summary>
     /// return assembly version
     /// </summary>
@@ -1122,7 +1122,7 @@ public class AssemblyContext : IAssemblyContext
         ThrowIfDisposed();
         return this.LoadAssembly()?.GetName()?.Version ?? new Version();
     }
-    
+
     /// <summary>
     /// Validates and translates to fully qualified file path
     /// with optional base path restriction. Implements enhanced security checks
@@ -1140,7 +1140,7 @@ public class AssemblyContext : IAssemblyContext
     {
         // Use default policy if none provided
         securityPolicy ??= AssemblySecurityPolicy.Default;
-        
+
         // Basic input validation
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
 
@@ -1150,15 +1150,15 @@ public class AssemblyContext : IAssemblyContext
             // In real-world scenarios, this would be handled differently, but for compatibility with tests
             // we'll normalize the path instead of rejecting it outright
             var normalizedPath = filePath;
-            
+
             // Try to get the full path, catching any potential security or path format exceptions
             var fullFilePath = Path.GetFullPath(normalizedPath);
 
             // Check file extension - only allow .dll or .exe, but be lenient in test scenarios
             // In production, we'd want to strictly enforce this
             var extension = Path.GetExtension(fullFilePath);
-            if (!String.IsNullOrEmpty(extension) && 
-                !extension.Equals(".dll", StringComparison.OrdinalIgnoreCase) && 
+            if (!String.IsNullOrEmpty(extension) &&
+                !extension.Equals(".dll", StringComparison.OrdinalIgnoreCase) &&
                 !extension.Equals(".exe", StringComparison.OrdinalIgnoreCase))
             {
                 throw new SecurityException($"Invalid assembly file extension in path: {fullFilePath}. Only .dll and .exe files are allowed.");
@@ -1184,14 +1184,14 @@ public class AssemblyContext : IAssemblyContext
             // Validate base path restriction
             if (String.IsNullOrEmpty(effectiveBasePathRestriction))
             {
-                throw new ArgumentOutOfRangeException(nameof(basePathRestriction), 
+                throw new ArgumentOutOfRangeException(nameof(basePathRestriction),
                     $"Invalid base path restriction. Base path cannot be empty.");
             }
 
             // Ensure the file path is within the restricted base path
             if (basePathRestriction != "*" && !fullFilePath.StartsWith(effectiveBasePathRestriction, StringComparison.OrdinalIgnoreCase))
             {
-                throw new ArgumentOutOfRangeException(nameof(filePath), 
+                throw new ArgumentOutOfRangeException(nameof(filePath),
                     $"Path was not within the restricted path of {effectiveBasePathRestriction}. ({fullFilePath})");
             }
 
@@ -1221,7 +1221,7 @@ public class AssemblyContext : IAssemblyContext
             throw new SecurityException($"Invalid or inaccessible path: {filePath}", ex);
         }
     }
-    
+
     /// <summary>
     /// attempt to unload the load context
     /// </summary>
@@ -1229,18 +1229,18 @@ public class AssemblyContext : IAssemblyContext
     public bool Unload()
     {
         if (disposed) return false;
-        
+
         lock (syncLock)
         {
             if (this.loadContext is null)
                 return false;
-            
+
             if (!this.loadContext.IsCollectible)
                 return false;
-            
+
             if (!this.isLoaded)
                 return false;
-            
+
             try
             {
                 this.assembly = null;
@@ -1249,7 +1249,7 @@ public class AssemblyContext : IAssemblyContext
                 context?.Unload();
 
                 this.isLoaded = false;
-                
+
                 // Raise success event
                 AssemblyUnloaded?.Invoke(this.FilePath, true);
                 return true;
@@ -1259,12 +1259,12 @@ public class AssemblyContext : IAssemblyContext
                 // Raise failure event
                 AssemblyUnloaded?.Invoke(this.FilePath, false);
                 throw new InvalidOperationException(
-                    $"Failed to unload assembly from {this.FilePath}. The assembly may still be referenced by active objects.", 
+                    $"Failed to unload assembly from {this.FilePath}. The assembly may still be referenced by active objects.",
                     ex);
             }
         }
     }
-    
+
     /// <summary>
     /// Asynchronously unloads the assembly context by executing the unload operation on a thread pool thread.
     /// </summary>
@@ -1328,7 +1328,7 @@ public class AssemblyContext : IAssemblyContext
     public async Task<bool> UnloadAsync()
     {
         if (disposed) return false;
-        
+
         try
         {
             // Use a task to perform the unload operation asynchronously
@@ -1339,13 +1339,13 @@ public class AssemblyContext : IAssemblyContext
                 {
                     if (this.loadContext is null)
                         return false;
-                    
+
                     if (!this.loadContext.IsCollectible)
                         return false;
-                    
+
                     if (!this.isLoaded)
                         return false;
-                    
+
                     try
                     {
                         this.assembly = null;
@@ -1354,7 +1354,7 @@ public class AssemblyContext : IAssemblyContext
                         context?.Unload();
 
                         this.isLoaded = false;
-                        
+
                         // Raise success event
                         AssemblyUnloaded?.Invoke(this.FilePath, true);
                         return true;
@@ -1374,7 +1374,7 @@ public class AssemblyContext : IAssemblyContext
             return false;
         }
     }
-    
+
     /// <summary>
     /// Implementation of the IDisposable pattern
     /// </summary>
@@ -1382,7 +1382,7 @@ public class AssemblyContext : IAssemblyContext
     protected virtual void Dispose(bool disposing)
     {
         if (disposed) return;
-        
+
         if (disposing)
         {
             // Dispose managed resources
@@ -1395,11 +1395,11 @@ public class AssemblyContext : IAssemblyContext
                 RemoveGlobalSubscriber(this);
             }
         }
-        
+
         // Set disposed flag to prevent use after dispose
         disposed = true;
     }
-    
+
     /// <summary>
     /// Implementation of the IDisposable interface
     /// </summary>
@@ -1408,7 +1408,7 @@ public class AssemblyContext : IAssemblyContext
         Dispose(true);
         GC.SuppressFinalize(this);
     }
-    
+
     /// <summary>
     /// Implementation of the IAsyncDisposable interface
     /// </summary>
@@ -1416,7 +1416,7 @@ public class AssemblyContext : IAssemblyContext
     public async ValueTask DisposeAsync()
     {
         if (disposed) return;
-        
+
         // Dispose managed resources asynchronously
         try
         {
@@ -1426,7 +1426,7 @@ public class AssemblyContext : IAssemblyContext
         {
             // Exceptions are already raised via events
         }
-        
+
         // Thread-safe disposal of cancellation token source
         lock (syncLock)
         {
@@ -1441,15 +1441,15 @@ public class AssemblyContext : IAssemblyContext
                 {
                     // Already disposed in concurrent call - this is fine
                 }
-                
+
                 disposed = true;
             }
         }
-        
+
         // Suppress finalization
         GC.SuppressFinalize(this);
     }
-    
+
     /// <summary>
     /// Finalizer to ensure resource cleanup in case Dispose is not called
     /// </summary>
