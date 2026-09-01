@@ -22,12 +22,12 @@ public class EventTests
         this.output = output;
         
 #if DEBUG
-        this.simpleDllPath = @"..\..\..\..\TestAssembly\bin\Debug\net8.0\zTestAssembly.dll";
-        this.dependentDllPath = @"..\..\..\..\zTestDependentAssembly\bin\Debug\net8.0\zTestDependentAssembly.dll";
+        const string configuration = "Debug";
 #else
-        this.simpleDllPath = @"..\..\..\..\TestAssembly\bin\Release\net8.0\zTestAssembly.dll";
-        this.dependentDllPath = @"..\..\..\..\zTestDependentAssembly\bin\Release\net8.0\zTestDependentAssembly.dll";
+        const string configuration = "Release";
 #endif
+        this.simpleDllPath = Path.Combine("..", "..", "..", "..", "TestAssembly", "bin", configuration, "net8.0", "zTestAssembly.dll");
+        this.dependentDllPath = Path.Combine("..", "..", "..", "..", "zTestDependentAssembly", "bin", configuration, "net8.0", "zTestDependentAssembly.dll");
     }
 
     #region AssemblyLoaded Event Tests

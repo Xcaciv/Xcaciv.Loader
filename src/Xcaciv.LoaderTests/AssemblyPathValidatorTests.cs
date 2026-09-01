@@ -29,7 +29,9 @@ public class AssemblyPathValidatorTests
 
         // Assert
         Assert.DoesNotContain('\0', result);
-        Assert.Equal("C:\\TestAssembly.dll", result);
+        // The sanitizer also normalizes '\' to the platform separator, so the
+        // expected value must be built the same way rather than hardcoded.
+        Assert.Equal($"C:{Path.DirectorySeparatorChar}TestAssembly.dll", result);
     }
 
     [Fact]
@@ -42,7 +44,10 @@ public class AssemblyPathValidatorTests
         var result = AssemblyPathValidator.SanitizeAssemblyPath(pathWithForwardSlashes);
 
         // Assert
-        Assert.DoesNotContain('/', result);
+        // '/' is itself the platform separator on Unix, so the meaningful check is
+        // that the *other* separator never appears in the normalized result.
+        var otherSeparator = Path.DirectorySeparatorChar == '/' ? '\\' : '/';
+        Assert.DoesNotContain(otherSeparator, result);
         Assert.Contains(Path.DirectorySeparatorChar.ToString(), result);
     }
 
@@ -102,7 +107,10 @@ public class AssemblyPathValidatorTests
     public void ResolveRelativeToBase_PathWithDotDot_Normalizes()
     {
         // Arrange
-        var relativePath = "Plugins\\..\\OtherPlugins\\MyPlugin.dll";
+        // Built with Path.Combine rather than a literal backslash string: '\' is not
+        // a path separator on Unix, so a hardcoded "Plugins\..\OtherPlugins\..." would
+        // be treated as one opaque file name instead of segments to normalize.
+        var relativePath = Path.Combine("Plugins", "..", "OtherPlugins", "MyPlugin.dll");
 
         // Act
         var result = AssemblyPathValidator.ResolveRelativeToBase(relativePath);
@@ -272,7 +280,10 @@ public class AssemblyPathValidatorTests
 
         // Assert
         Assert.DoesNotContain("//", result);
-        Assert.DoesNotContain("/", result);
+        // '/' is the platform separator on Unix, so only the *other* separator is
+        // guaranteed to be normalized away.
+        var otherSeparator = Path.DirectorySeparatorChar == '/' ? '\\' : '/';
+        Assert.DoesNotContain(otherSeparator.ToString(), result);
         Assert.Contains("Assembly.dll", result);
     }
 
@@ -305,7 +316,10 @@ public class AssemblyPathValidatorTests
             resolveRelativeToBase: false);
 
         // Assert
-        Assert.DoesNotContain("/", result);
+        // '/' is the platform separator on Unix, so only the *other* separator is
+        // guaranteed to be normalized away.
+        var otherSeparator = Path.DirectorySeparatorChar == '/' ? '\\' : '/';
+        Assert.DoesNotContain(otherSeparator.ToString(), result);
         Assert.Contains("MyPlugin.dll", result);
     }
 
@@ -322,7 +336,10 @@ public class AssemblyPathValidatorTests
         Assert.False(result.StartsWith(" "), "Result should not start with whitespace");
         Assert.False(result.EndsWith(" "), "Result should not end with whitespace");
         Assert.DoesNotContain("//", result);
-        Assert.DoesNotContain("/", result);
+        // '/' is the platform separator on Unix, so only the *other* separator is
+        // guaranteed to be normalized away.
+        var otherSeparator = Path.DirectorySeparatorChar == '/' ? '\\' : '/';
+        Assert.DoesNotContain(otherSeparator.ToString(), result);
         Assert.Contains("Assembly.dll", result);
     }
 

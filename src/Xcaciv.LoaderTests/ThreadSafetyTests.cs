@@ -25,12 +25,12 @@ public class ThreadSafetyTests
         this.output = output;
         
 #if DEBUG
-        this.simpleDllPath = @"..\..\..\..\TestAssembly\bin\Debug\net8.0\zTestAssembly.dll";
-        this.dependentDllPath = @"..\..\..\..\zTestDependentAssembly\bin\Debug\net8.0\zTestDependentAssembly.dll";
+        const string configuration = "Debug";
 #else
-        this.simpleDllPath = @"..\..\..\..\TestAssembly\bin\Release\net8.0\zTestAssembly.dll";
-        this.dependentDllPath = @"..\..\..\..\zTestDependentAssembly\bin\Release\net8.0\zTestDependentAssembly.dll";
+        const string configuration = "Release";
 #endif
+        this.simpleDllPath = Path.Combine("..", "..", "..", "..", "TestAssembly", "bin", configuration, "net8.0", "zTestAssembly.dll");
+        this.dependentDllPath = Path.Combine("..", "..", "..", "..", "zTestDependentAssembly", "bin", configuration, "net8.0", "zTestDependentAssembly.dll");
     }
 
     #region Concurrent Loading Tests
@@ -609,7 +609,7 @@ public class ThreadSafetyTests
             // Assert
             Assert.Equal(contextCount, contexts.Count);
             
-            output.WriteLine($"Stress test: {contextCount} contexts × {operationsPerContext} operations = {contextCount * operationsPerContext} total operations completed");
+            output.WriteLine($"Stress test: {contextCount} contexts ï¿½ {operationsPerContext} operations = {contextCount * operationsPerContext} total operations completed");
         }
         finally
         {
