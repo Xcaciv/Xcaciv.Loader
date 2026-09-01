@@ -5,7 +5,7 @@ namespace Xcaciv.Loader.Exceptions;
 /// <summary>
 /// Exception thrown when a requested type cannot be found in an assembly
 /// </summary>
-public class TypeNotFoundException : Exception
+public sealed class TypeNotFoundException : Exception
 {
     /// <summary>
     /// The name of the type that was not found

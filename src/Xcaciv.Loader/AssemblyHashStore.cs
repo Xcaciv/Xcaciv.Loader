@@ -25,7 +25,7 @@ namespace Xcaciv.Loader;
 /// - Data format: FilePath,Hash
 /// - Fields containing commas, quotes, or newlines are escaped per CSV standard
 /// </remarks>
-public class AssemblyHashStore
+public sealed class AssemblyHashStore
 {
     private readonly Dictionary<string, string> hashes = new();
     private readonly object lockObject = new();
