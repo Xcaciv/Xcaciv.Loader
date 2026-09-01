@@ -235,7 +235,7 @@ public class AssemblyContext : IAssemblyContext
     ///   <item><description>I/O bottlenecks or disk issues</description></item>
     /// </list>
     /// <para><strong>Disabling Timeout:</strong> Set to <c>Timeout.InfiniteTimeSpan</c> to wait indefinitely.</para>
-    /// <para><strong>Performance Note:</strong> Uses <see cref="Task.Run"/> when timeout is enabled, 
+    /// <para><strong>Performance Note:</strong> Uses <see cref="Task.Run(Action)"/> when timeout is enabled,
     /// which adds minimal thread pool overhead but provides protection against hangs.</para>
     /// </remarks>
     /// <example>
@@ -1277,7 +1277,7 @@ public class AssemblyContext : IAssemblyContext
     /// <para><strong>Async Behavior:</strong></para>
     /// <list type="bullet">
     ///   <item><description>.NET's <see cref="AssemblyLoadContext.Unload"/> is fundamentally synchronous</description></item>
-    ///   <item><description>This method uses <see cref="Task.Run"/> to avoid blocking the calling thread</description></item>
+    ///   <item><description>This method uses <see cref="Task.Run(Action)"/> to avoid blocking the calling thread</description></item>
     ///   <item><description>The actual unload operation still executes synchronously on a thread pool thread</description></item>
     ///   <item><description>True async/await benefits are limited to preventing caller thread blocking</description></item>
     /// </list>

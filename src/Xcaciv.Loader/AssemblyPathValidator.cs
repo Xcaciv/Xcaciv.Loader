@@ -72,7 +72,7 @@ public static class AssemblyPathValidator
     /// <exception cref="ArgumentException">Thrown when relativePath is null, empty, or whitespace</exception>
     /// <remarks>
     /// <para>This method is useful for resolving plugin paths relative to the application directory.</para>
-    /// <para>The returned path is normalized using <see cref="Path.GetFullPath"/>.</para>
+    /// <para>The returned path is normalized using <see cref="Path.GetFullPath(string)"/>.</para>
     /// </remarks>
     /// <example>
     /// <code>

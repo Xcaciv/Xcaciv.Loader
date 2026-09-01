@@ -16,6 +16,7 @@
     <AssemblyName>Xcaciv.Loader</AssemblyName>
     <RootNamespace>Xcaciv.Loader</RootNamespace>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     
     <!-- Package Metadata -->
