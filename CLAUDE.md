@@ -6,10 +6,11 @@ addition to what's below.
 
 ## Class design
 
-- Never mark a class that inherits from `Exception` (directly or transitively)
-  as `sealed` in this repository. Exception types are conventionally left open
-  so consumers can derive more specific exceptions from them in their own
-  error hierarchies; sealing forecloses that even when nothing in this repo
-  currently does it. This applies regardless of what a "seal non-inherited
-  classes" cleanup pass would otherwise conclude from an empty derived-types
-  search.
+- Never mark any class `sealed` in this repository unless explicitly
+  instructed to do so for that specific class. This holds even when a class
+  has zero derived types and no virtual/abstract members - the kind of
+  evidence a "seal non-inherited classes" cleanup pass would otherwise treat
+  as sufficient on its own. Exception-derived types are a specific case of
+  this: consumers conventionally build their own error hierarchies on top of
+  library exceptions, so sealing them is particularly likely to break someone
+  even though nothing in this repo currently derives from one.

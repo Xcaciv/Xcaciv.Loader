@@ -15,7 +15,7 @@ namespace Xcaciv.Loader;
 ///   <item><description><see cref="Strict"/>: Enhanced protection blocking additional system and credential directories</description></item>
 /// </list>
 /// </remarks>
-public sealed class AssemblySecurityPolicy
+public class AssemblySecurityPolicy
 {
     // Default list of forbidden directories
     private static readonly string[] DefaultForbiddenDirectories =
