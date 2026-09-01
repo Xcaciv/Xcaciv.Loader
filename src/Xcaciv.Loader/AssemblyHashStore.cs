@@ -215,11 +215,11 @@ public class AssemblyHashStore
                     throw new FormatException(
                         $"Invalid data at line {lineNumber}: Path and hash cannot be empty");
                 }
-                
-                loadedHashes[path] = hash;
+
+                loadedHashes[NormalizePath(path)] = hash;
             }
         }
-        
+
         lock (lockObject)
         {
             hashes.Clear();
@@ -284,11 +284,11 @@ public class AssemblyHashStore
                     throw new FormatException(
                         $"Invalid data at line {lineNumber}: Path and hash cannot be empty");
                 }
-                
-                loadedHashes[path] = hash;
+
+                loadedHashes[NormalizePath(path)] = hash;
             }
         }
-        
+
         lock (lockObject)
         {
             foreach (var kvp in loadedHashes.Where(kvp => overwriteExisting || !hashes.ContainsKey(kvp.Key)))
