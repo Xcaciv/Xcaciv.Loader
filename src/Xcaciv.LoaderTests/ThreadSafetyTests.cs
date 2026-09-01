@@ -609,7 +609,7 @@ public class ThreadSafetyTests
             // Assert
             Assert.Equal(contextCount, contexts.Count);
 
-            output.WriteLine($"Stress test: {contextCount} contexts � {operationsPerContext} operations = {contextCount * operationsPerContext} total operations completed");
+            output.WriteLine($"Stress test: {contextCount} contexts x {operationsPerContext} operations = {contextCount * operationsPerContext} total operations completed");
         }
         finally
         {
