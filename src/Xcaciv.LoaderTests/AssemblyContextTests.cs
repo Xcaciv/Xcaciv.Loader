@@ -13,21 +13,21 @@ namespace Xcaciv.Loader.Tests
     public class AssemblyContextTests
     {
         private ITestOutputHelper _testOutput;
-        private string simpleDllPath = @"..\..\..\..\TestAssembly\bin\{1}\net8.0\zTestAssembly.dll";
-        private string dependentDllPath = @"..\..\..\..\zTestDependentAssembly\bin\{1}\net8.0\zTestDependentAssembly.dll";
+        private string simpleDllPath;
+        private string dependentDllPath;
 
         public AssemblyContextTests(ITestOutputHelper output)
         {
             this._testOutput = output;
 #if DEBUG
             this._testOutput.WriteLine("Tests in Debug mode");
-            this.simpleDllPath = simpleDllPath.Replace("{1}", "Debug");
-            this.dependentDllPath = dependentDllPath.Replace("{1}", "Debug");
+            const string configuration = "Debug";
 #else
             this._testOutput.WriteLine("Tests in Release mode??");
-            this.simpleDllPath = simpleDllPath.Replace("{1}", "Release");
-            this.dependentDllPath = dependentDllPath.Replace("{1}", "Release");
+            const string configuration = "Release";
 #endif
+            this.simpleDllPath = System.IO.Path.Combine("..", "..", "..", "..", "TestAssembly", "bin", configuration, "net8.0", "zTestAssembly.dll");
+            this.dependentDllPath = System.IO.Path.Combine("..", "..", "..", "..", "zTestDependentAssembly", "bin", configuration, "net8.0", "zTestDependentAssembly.dll");
 
             // resolve absolute paths
             this.simpleDllPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, this.simpleDllPath));
@@ -37,7 +37,11 @@ namespace Xcaciv.Loader.Tests
         [Fact()]
         public void VerifyPath_Test()
         {
-            var restrictedPath = System.IO.Path.Combine("C:", "some", "folder", "path");
+            // Build a path that is genuinely rooted on the current platform (a Windows
+            // drive letter is not rooted on Unix, so "C:\..." would resolve relative to
+            // the current directory there instead of round-tripping unchanged).
+            var root = OperatingSystem.IsWindows() ? "C:" : System.IO.Path.DirectorySeparatorChar.ToString();
+            var restrictedPath = System.IO.Path.Combine(root, "some", "folder", "path");
             var filePath = System.IO.Path.Combine(restrictedPath, "subpath");
             var actualpath = Xcaciv.Loader.AssemblyContext.VerifyPath(filePath);
 
