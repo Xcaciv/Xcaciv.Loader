@@ -460,14 +460,15 @@ A: Create a branch, update one module at a time, run tests, verify behavior matc
 
 ## 12. Timeline
 
-| Date | Milestone |
-|------|-----------|
-| 2025-11-29 | v2.0.0 released with deprecation warnings |
-| 2026-03-01 | Deprecation warnings become errors in new v2.x releases |
-| 2026-06-01 | v1.x reaches end of life (security fixes cease) |
-| 2026-09-01 | v3.0.0 removes deprecated methods entirely |
+| Date | Milestone | Status |
+|------|-----------|--------|
+| 2025-11-29 | v2.0.0 released with deprecation warnings | Done |
+| 2026-06-01 | v1.x reaches end of life (security fixes cease) | Done — see [SECURITY.md](../SECURITY.md) |
+| TBD | v3.0.0 removes the deprecated methods entirely | Not yet scheduled — the deprecated methods (`SetStrictDirectoryRestriction`, `IsStrictDirectoryRestrictionEnabled`, `GetLoadedTypes<T>()`) are still present as of the current release; check [CHANGELOG.md](../CHANGELOG.md) for the actual removal release |
 
-**Recommendation**: Complete migration before 2026-03-01 to avoid breaking changes.
+**Recommendation**: Migrate when convenient — the deprecated methods still work
+today, but v1.x is past its security-fix cutoff, so staying on v1.x is no
+longer a safe option regardless of when v3.0.0 ships.
 
 ---
 

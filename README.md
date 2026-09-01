@@ -26,6 +26,6 @@ This library can be built for both .NET 8.0 (default) and .NET 10.0.
 
 See the [Multi-Framework Documentation](docs/multi-framework.md) for details on how to build for different target frameworks.
 
-## Specification
+## Documentation
 
-For detailed specifications, see [the specification document](spec/spec-architecture-dynamic-assembly-loading.md)
+For security features, migration guides, and the original design specification, see [docs/README.md](docs/README.md).

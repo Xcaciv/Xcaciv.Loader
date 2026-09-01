@@ -52,7 +52,7 @@ string result = compiler.Stuff("input"); // Compiles expressions dynamically
 
 ### Test Suites
 
-#### DisallowDynamicAssembliesTests
+#### DisallowDynamicAssembliesTests (12 tests)
 Tests the `DisallowDynamicAssemblies` security policy property:
 - Policy configuration validation
 - Context configuration with different policies
@@ -60,7 +60,7 @@ Tests the `DisallowDynamicAssemblies` security policy property:
 - Property immutability
 - Policy inheritance
 
-#### GlobalDynamicAssemblyMonitoringTests  
+#### GlobalDynamicAssemblyMonitoringTests (10 tests)
 Tests the `EnableGlobalDynamicAssemblyMonitoring()` method:
 - Basic monitoring functionality
 - Strict vs Default policy behavior
@@ -115,15 +115,6 @@ var result = risky.Stuff("test"); // Creates dynamic type
 // Verifies end-to-end workflow
 ```
 
-## Test Coverage
-
-| Feature | Tests | Status |
-|---------|-------|--------|
-| DisallowDynamicAssemblies property | 12 | ? |
-| EnableGlobalDynamicAssemblyMonitoring | 10 | ? |
-| AssemblyPreflightAnalyzer integration | 2 | ? |
-| **Total** | **24+** | ? |
-
 ## Key Test Scenarios
 
 ### Scenario 1: Static Detection with Preflight Analysis
@@ -132,7 +123,7 @@ Input: zTestRiskyAssembly.dll
 Process: AssemblyPreflightAnalyzer.Analyze()
 Output: HasAnyIndicators = true
 Details: Detects Reflection.Emit usage
-Status: ? Works without loading assembly
+Status: Works without loading the assembly
 ```
 
 ### Scenario 2: Runtime Monitoring with Strict Policy
@@ -141,7 +132,7 @@ Setup: AssemblyContext with Strict policy
 Enable: GlobalDynamicAssemblyMonitoring()
 Action: Execute zTestRiskyAssembly code
 Result: SecurityViolation event raised
-Status: ? Detects dynamic assembly creation
+Status: Detects dynamic assembly creation
 ```
 
 ### Scenario 3: Silent Operation with Default Policy
@@ -150,7 +141,7 @@ Setup: AssemblyContext with Default policy
 Enable: GlobalDynamicAssemblyMonitoring()
 Action: Create dynamic assembly with AssemblyBuilder
 Result: No SecurityViolation event
-Status: ? Correct policy-based behavior
+Status: Correct policy-based behavior
 ```
 
 ### Scenario 4: Thread-Safe Multi-Context Monitoring
@@ -159,7 +150,7 @@ Setup: 10 contexts with Strict policy
 Action: All call EnableGlobalDynamicAssemblyMonitoring() concurrently
 Create: 1 dynamic assembly
 Result: All 10 contexts receive SecurityViolation event
-Status: ? Thread-safe, no duplicates
+Status: Thread-safe, no duplicates
 ```
 
 ### Scenario 5: Memory-Safe Cleanup
@@ -168,21 +159,53 @@ Setup: Create context, enable monitoring, dispose
 GC: Force garbage collection
 Create: New dynamic assembly
 Result: Disposed context doesn't receive event
-Status: ? Weak references prevent memory leaks
+Status: Weak references prevent memory leaks
 ```
+
+## Design Notes
+
+### Weak References in GlobalDynamicAssemblyMonitoring
+The global monitor uses `WeakReference<AssemblyContext>` to avoid memory leaks:
+- Contexts can be disposed without affecting the global subscription list
+- Disposed contexts are automatically cleaned up when GC runs
+- No explicit deregistration required
+
+### Thread Safety
+The global monitor uses a lock (`globalMonitorLock`) to protect:
+- Subscriber list modifications
+- Handler subscription/unsubscription
+- List cleanup
+
+This ensures thread-safe registration and event delivery.
+
+### Policy Inheritance
+- Strict policy enables both `DisallowDynamicAssemblies` and more forbidden directories
+- Custom policies can be created with specific forbidden directories
+- Each context instance can have its own policy
+- No global state (instance-based configuration)
+
+## Security Implications
+
+The test assemblies (`zTestRiskyAssembly` and `zTestLinqExpressions`) intentionally demonstrate risky patterns:
+
+1. **zTestRiskyAssembly**: Uses `AssemblyBuilder` to create types at runtime — demonstrates Reflection.Emit usage, and allows testing of both static preflight detection and runtime dynamic-assembly monitoring.
+2. **zTestLinqExpressions**: Uses `Expression.Lambda` with `Compile()` — demonstrates LINQ Expressions code generation, and validates monitoring for indirect code generation.
+
+These assemblies are marked with obvious names (`zTest*`) to prevent accidental inclusion in production scenarios. They are test-only and should never be deployed.
 
 ## Verification Steps
 
 ### 1. Build Verification
 ```powershell
 dotnet build
-# Expected: Build successful, all projects compile
+# Expected: Build successful, all projects compile with 0 warnings
 ```
 
 ### 2. Test Execution
 ```powershell
 dotnet test --logger "console;verbosity=detailed"
-# Expected: 204+ tests, all passing
+# Expected: 204 tests total (202 passing, 2 skipped by design — see the
+# Skip attributes in SecurityViolationTests.cs for why)
 ```
 
 ### 3. Specific Feature Tests
@@ -193,14 +216,15 @@ dotnet test --filter "ClassName=DisallowDynamicAssembliesTests"
 
 # Test GlobalDynamicAssemblyMonitoring  
 dotnet test --filter "ClassName=GlobalDynamicAssemblyMonitoringTests"
-# Expected: 10+ tests passing
+# Expected: 10 tests passing
 ```
 
 ### 4. Coverage Report
 ```powershell
-dotnet test /p:CollectCoverage=true
-# Expected: >90% coverage for security features
+dotnet test --collect:"XPlat Code Coverage"
 ```
+Generates a Cobertura report per test run; no specific coverage threshold is
+currently tracked or enforced in CI.
 
 ## Troubleshooting
 
@@ -272,20 +296,10 @@ Assert.True(asm.IsDynamic); // Confirm it's dynamic
       --collect:"XPlat Code Coverage"
 ```
 
-### Build Pipeline Steps
-1. Build solution
-2. Run full test suite
-3. Generate coverage report
-4. Verify >90% coverage on security features
-5. Publish test results
-6. Validate no security warnings
-
 ## Documentation References
 
-- **TESTING-DYNAMIC-ASSEMBLY-MONITORING.md** - Comprehensive testing guide
-- **IMPLEMENTATION-SUMMARY.md** - Architecture and design details
-- **TEST-COVERAGE-VERIFICATION.md** - Coverage checklist
-- **CHANGELOG.md** - Version history and features
+- **[security-features-v2.md](security-features-v2.md)** — the security features these tests exercise
+- **[CHANGELOG.md](../CHANGELOG.md)** — version history and when these features shipped
 
 ## Support
 
@@ -298,22 +312,15 @@ For issues or questions:
 
 ## Version Compatibility
 
-- **Framework**: .NET 8.0+
+- **Framework**: .NET 8.0+ (opt in to .NET 10.0 with `/p:UseNet10=true`; see [multi-framework.md](multi-framework.md))
 - **Testing Framework**: xUnit
 - **Supported Platforms**: Windows, Linux, macOS
 - **Build Tool**: dotnet CLI
 
-## Performance Expectations
-
-- **Full Test Suite**: < 5 seconds
-- **Single Test Class**: < 1 second  
-- **Integration Tests**: < 100ms per test
-- **Memory Usage**: < 500MB for full suite
-
-## Future Enhancements
+## Future Testing Considerations
 
 - [ ] Performance benchmarking tests
-- [ ] Stress testing with many dynamic assemblies
+- [ ] Stress testing with many dynamic assemblies created rapidly
+- [ ] Memory profiling to verify weak references are properly cleaned
 - [ ] Cross-domain testing (if applicable)
-- [ ] Load testing integration
 - [ ] Snapshot testing for policy configurations
