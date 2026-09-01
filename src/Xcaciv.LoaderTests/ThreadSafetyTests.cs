@@ -23,7 +23,7 @@ public class ThreadSafetyTests
     public ThreadSafetyTests(ITestOutputHelper output)
     {
         this.output = output;
-        
+
 #if DEBUG
         const string configuration = "Debug";
 #else
@@ -43,7 +43,7 @@ public class ThreadSafetyTests
         var tasks = new List<Task>();
         var contexts = new List<AssemblyContext>();
         var lockObj = new object();
-        
+
         // Act
         for (int i = 0; i < contextCount; i++)
         {
@@ -54,24 +54,24 @@ public class ThreadSafetyTests
                 {
                     contexts.Add(context);
                 }
-                
+
                 // Create instance to trigger assembly load
                 var instance = context.CreateInstance<IClass1>("Class1");
                 Assert.NotNull(instance);
             }));
         }
-        
+
         await Task.WhenAll(tasks);
-        
+
         // Assert
         Assert.Equal(contextCount, contexts.Count);
-        
+
         // Cleanup
         foreach (var context in contexts)
         {
             context.Dispose();
         }
-        
+
         output.WriteLine($"Successfully created and used {contextCount} contexts concurrently");
     }
 
@@ -82,7 +82,7 @@ public class ThreadSafetyTests
         const int operationCount = 5;
         var results = new string?[operationCount];
         var contexts = new AssemblyContext[operationCount];
-        
+
         try
         {
             // Act - Load same assembly from multiple threads simultaneously
@@ -92,13 +92,13 @@ public class ThreadSafetyTests
                 var instance = contexts[i].CreateInstance<IClass1>("Class1");
                 results[i] = instance?.Stuff("test");
             })).ToArray();
-            
+
             await Task.WhenAll(tasks);
-            
+
             // Assert
             Assert.All(results, result => Assert.NotNull(result));
             Assert.All(results, result => Assert.Equal("test output", result));
-            
+
             output.WriteLine($"All {operationCount} concurrent loads completed successfully");
         }
         finally
@@ -117,7 +117,7 @@ public class ThreadSafetyTests
         // Arrange
         var contexts = new List<AssemblyContext>();
         var lockObj = new object();
-        
+
         try
         {
             // Act - Load different assemblies concurrently
@@ -127,20 +127,20 @@ public class ThreadSafetyTests
                 lock (lockObj) contexts.Add(context);
                 return context.CreateInstance<IClass1>("Class1");
             });
-            
+
             var task2 = Task.Run(() =>
             {
                 var context = new AssemblyContext(dependentDllPath, basePathRestriction: "*");
                 lock (lockObj) contexts.Add(context);
                 return context.CreateInstance<IClass1>("Class1");
             });
-            
+
             var results = await Task.WhenAll(task1, task2);
-            
+
             // Assert
             Assert.All(results, instance => Assert.NotNull(instance));
             Assert.Equal(2, contexts.Count);
-            
+
             output.WriteLine("Successfully loaded different assemblies concurrently");
         }
         finally
@@ -162,28 +162,28 @@ public class ThreadSafetyTests
         // Arrange
         const int contextCount = 5;
         var contexts = new AssemblyContext[contextCount];
-        
+
         // Create and load all contexts
         for (int i = 0; i < contextCount; i++)
         {
             contexts[i] = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
             contexts[i].CreateInstance<IClass1>("Class1");
         }
-        
+
         // Act - Unload all contexts concurrently
         var tasks = contexts.Select(c => Task.Run(() => c.UnloadAsync())).ToArray();
-        
+
         var results = await Task.WhenAll(tasks);
-        
+
         // Assert
         Assert.All(results, result => Assert.True(result));
-        
+
         // Cleanup
         foreach (var context in contexts)
         {
             context.Dispose();
         }
-        
+
         output.WriteLine($"Successfully unloaded {contextCount} contexts concurrently");
     }
 
@@ -193,7 +193,7 @@ public class ThreadSafetyTests
         // Arrange
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         bool loadCompleted = false;
-        
+
         // Act - Try to unload while loading (should be safe due to locking)
         var loadTask = Task.Run(() =>
         {
@@ -201,17 +201,17 @@ public class ThreadSafetyTests
             loadCompleted = true;
             return instance;
         });
-        
+
         // Give load task a moment to start
         await Task.Delay(10);
-        
+
         var unloadTask = Task.Run(() => context.UnloadAsync());
-        
+
         await Task.WhenAll(loadTask, unloadTask);
-        
+
         // Assert - Either load succeeded or unload prevented it
         Assert.True(loadCompleted || !loadCompleted); // One operation succeeded
-        
+
         output.WriteLine("Concurrent load/unload completed without deadlock");
     }
 
@@ -226,7 +226,7 @@ public class ThreadSafetyTests
         const int handlerCount = 10;
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         var callCounts = new int[handlerCount];
-        
+
         // Act - Register event handlers from multiple threads
         var tasks = Enumerable.Range(0, handlerCount).Select(i => Task.Run(() =>
         {
@@ -235,15 +235,15 @@ public class ThreadSafetyTests
                 Interlocked.Increment(ref callCounts[i]);
             };
         })).ToArray();
-        
+
         await Task.WhenAll(tasks);
-        
+
         // Trigger event
         context.CreateInstance<IClass1>("Class1");
-        
+
         // Assert - All handlers should have been called
         Assert.All(callCounts, count => Assert.Equal(1, count));
-        
+
         output.WriteLine($"All {handlerCount} concurrent event handlers executed successfully");
     }
 
@@ -254,7 +254,7 @@ public class ThreadSafetyTests
         const int handlerCount = 5;
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         var handlers = new Action<string, string, Version?>[handlerCount];
-        
+
         // Register handlers
         for (int i = 0; i < handlerCount; i++)
         {
@@ -262,21 +262,21 @@ public class ThreadSafetyTests
             handlers[i] = (path, name, version) => output.WriteLine($"Handler {index} called");
             context.AssemblyLoaded += handlers[i];
         }
-        
+
         // Act - Unregister handlers from multiple threads
         var tasks = Enumerable.Range(0, handlerCount).Select(i => Task.Run(() =>
         {
             context.AssemblyLoaded -= handlers[i];
         })).ToArray();
-        
+
         await Task.WhenAll(tasks);
-        
+
         // Trigger event (no handlers should be called)
         context.CreateInstance<IClass1>("Class1");
-        
+
         // Assert - No exceptions should occur
         Assert.True(true); // If we got here, thread safety is maintained
-        
+
         output.WriteLine("Concurrent event handler unregistration completed safely");
     }
 
@@ -287,7 +287,7 @@ public class ThreadSafetyTests
         const int contextCount = 5;
         var totalEventCalls = 0;
         var contexts = new List<AssemblyContext>();
-        
+
         try
         {
             // Create contexts with shared event handler
@@ -300,18 +300,18 @@ public class ThreadSafetyTests
                 };
                 contexts.Add(context);
             }
-            
+
             // Act - Trigger loads from multiple threads
             var tasks = contexts.Select(c => Task.Run(() =>
             {
                 c.CreateInstance<IClass1>("Class1");
             })).ToArray();
-            
+
             await Task.WhenAll(tasks);
-            
+
             // Assert
             Assert.Equal(contextCount, totalEventCalls);
-            
+
             output.WriteLine($"Event handler called {totalEventCalls} times from {contextCount} threads");
         }
         finally
@@ -333,20 +333,20 @@ public class ThreadSafetyTests
         // Arrange
         const int operationCount = 10;
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
-        
+
         // Act - Create instances concurrently from same context
         var tasks = Enumerable.Range(0, operationCount).Select(i => Task.Run(() =>
         {
             var instance = context.CreateInstance<IClass1>("Class1");
             return instance?.Stuff($"test{i}");
         })).ToArray();
-        
+
         var results = await Task.WhenAll(tasks);
-        
+
         // Assert
         Assert.All(results, result => Assert.NotNull(result));
         Assert.Equal(operationCount, results.Length);
-        
+
         output.WriteLine($"{operationCount} concurrent CreateInstance calls completed successfully");
     }
 
@@ -355,23 +355,23 @@ public class ThreadSafetyTests
     {
         // Arrange
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
-        
+
         // Act - Create different types concurrently
         var task1 = Task.Run(() => context.CreateInstance<IClass1>("Class1"));
         var task2 = Task.Run(() => context.CreateInstance("Class1"));
         var task3 = Task.Run(() => context.GetTypes());
-        
+
         await Task.WhenAll(task1, task2, task3);
-        
+
         // Assert
         var result1 = await task1;
         var result2 = await task2;
         var result3 = await task3;
-        
+
         Assert.NotNull(result1);
         Assert.NotNull(result2);
         Assert.NotNull(result3);
-        
+
         output.WriteLine("Concurrent CreateInstance with different signatures completed successfully");
     }
 
@@ -386,7 +386,7 @@ public class ThreadSafetyTests
         var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         bool operationCompleted = false;
         Exception? capturedException = null;
-        
+
         // Act - Start operation and dispose concurrently
         var operationTask = Task.Run(() =>
         {
@@ -401,19 +401,19 @@ public class ThreadSafetyTests
                 // This is expected if dispose wins the race
             }
         });
-        
+
         var disposeTask = Task.Run(async () =>
         {
             await Task.Delay(5); // Give operation a tiny head start
             context.Dispose();
         });
-        
+
         await Task.WhenAll(operationTask, disposeTask);
-        
+
         // Assert - Either operation completed or ObjectDisposedException was thrown
         Assert.True(operationCompleted || capturedException is ObjectDisposedException);
-        
-        output.WriteLine(operationCompleted 
+
+        output.WriteLine(operationCompleted
             ? "Operation completed before dispose"
             : "Dispose occurred during operation (expected ObjectDisposedException)");
     }
@@ -424,17 +424,17 @@ public class ThreadSafetyTests
         // Arrange
         var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         context.CreateInstance<IClass1>("Class1");
-        
+
         // Act - Dispose multiple times concurrently
-        var disposeTasks = Enumerable.Range(0, 5).Select(i => 
+        var disposeTasks = Enumerable.Range(0, 5).Select(i =>
             Task.Run(async () => await context.DisposeAsync())
         ).ToArray();
-        
+
         await Task.WhenAll(disposeTasks);
-        
+
         // Assert - No exceptions should occur (multiple dispose is safe)
         Assert.True(true);
-        
+
         output.WriteLine("Concurrent DisposeAsync completed safely");
     }
 
@@ -448,15 +448,15 @@ public class ThreadSafetyTests
         // Arrange
         const int operationCount = 10;
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
-        
+
         // Act - Call GetTypes concurrently
         var tasks = Enumerable.Range(0, operationCount).Select(i => Task.Run(() =>
         {
             return context.GetTypes();
         })).ToArray();
-        
+
         var results = await Task.WhenAll(tasks);
-        
+
         // Assert
         Assert.All(results, types => Assert.NotNull(types));
         Assert.All(results, types =>
@@ -466,11 +466,11 @@ public class ThreadSafetyTests
                 Assert.NotEmpty(types);
             }
         });
-        
+
         // All results should have the same count
         var firstCount = results[0]!.Count();
         Assert.All(results, types => Assert.Equal(firstCount, types!.Count()));
-        
+
         output.WriteLine($"{operationCount} concurrent GetTypes calls returned consistent results");
     }
 
@@ -480,19 +480,19 @@ public class ThreadSafetyTests
         // Arrange
         const int operationCount = 10;
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
-        
+
         // Act - Call GetTypes<T> concurrently
         var tasks = Enumerable.Range(0, operationCount).Select(i => Task.Run(() =>
         {
             return context.GetTypes<IClass1>().ToList();
         })).ToArray();
-        
+
         var results = await Task.WhenAll(tasks);
-        
+
         // Assert
         Assert.All(results, types => Assert.NotNull(types));
         Assert.All(results, types => Assert.NotEmpty(types));
-        
+
         output.WriteLine($"{operationCount} concurrent GetTypes<T> calls completed successfully");
     }
 
@@ -506,19 +506,19 @@ public class ThreadSafetyTests
         // Arrange
         const int operationCount = 20;
         var testPath = Path.Combine(Path.GetTempPath(), "test.dll");
-        
+
         // Act - Call VerifyPath concurrently
         var tasks = Enumerable.Range(0, operationCount).Select(i => Task.Run(() =>
         {
             return AssemblyContext.VerifyPath(testPath, "*", AssemblySecurityPolicy.Default);
         })).ToArray();
-        
+
         var results = await Task.WhenAll(tasks);
-        
+
         // Assert
         Assert.All(results, path => Assert.NotNull(path));
         Assert.All(results, path => Assert.Equal(Path.GetFullPath(testPath), path));
-        
+
         output.WriteLine($"{operationCount} concurrent VerifyPath calls completed successfully");
     }
 
@@ -531,7 +531,7 @@ public class ThreadSafetyTests
         var lockObj = new object();
         var testPath = Path.Combine(Path.GetTempPath(), "test.dll");
         File.WriteAllText(testPath, "dummy");
-        
+
         try
         {
             // Act - Create contexts with different policies concurrently
@@ -542,14 +542,14 @@ public class ThreadSafetyTests
                 lock (lockObj) contexts.Add(context);
                 return context;
             })).ToArray();
-            
+
             await Task.WhenAll(tasks);
-            
+
             // Assert
             Assert.Equal(contextCount, contexts.Count);
             Assert.Contains(contexts, c => !c.SecurityPolicy.StrictMode);
             Assert.Contains(contexts, c => c.SecurityPolicy.StrictMode);
-            
+
             output.WriteLine($"Created {contextCount} contexts with different policies concurrently");
         }
         finally
@@ -576,7 +576,7 @@ public class ThreadSafetyTests
         var allTasks = new List<Task>();
         var contexts = new List<AssemblyContext>();
         var lockObj = new object();
-        
+
         try
         {
             // Act - Create many contexts and perform operations
@@ -586,7 +586,7 @@ public class ThreadSafetyTests
                 {
                     var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
                     lock (lockObj) contexts.Add(context);
-                    
+
                     var tasks = new List<Task>();
                     for (int j = 0; j < operationsPerContext; j++)
                     {
@@ -597,18 +597,18 @@ public class ThreadSafetyTests
                             Assert.NotNull(result);
                         }));
                     }
-                    
+
                     return Task.WhenAll(tasks);
                 });
-                
+
                 allTasks.Add(contextTask);
             }
-            
+
             await Task.WhenAll(allTasks);
-            
+
             // Assert
             Assert.Equal(contextCount, contexts.Count);
-            
+
             output.WriteLine($"Stress test: {contextCount} contexts � {operationsPerContext} operations = {contextCount * operationsPerContext} total operations completed");
         }
         finally

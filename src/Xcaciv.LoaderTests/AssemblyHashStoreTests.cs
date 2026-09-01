@@ -238,7 +238,7 @@ public class AssemblyHashStoreTests : IDisposable
         // Arrange
         var store = new AssemblyHashStore();
         var csvPath = Path.Combine(tempDirectory, "withcomments.csv");
-        File.WriteAllText(csvPath, 
+        File.WriteAllText(csvPath,
             "# This is a comment\n" +
             "C:\\Test\\Assembly.dll,hash==\n" +
             "# Another comment\n");
@@ -275,7 +275,7 @@ public class AssemblyHashStoreTests : IDisposable
         // Arrange
         var store = new AssemblyHashStore();
         store.AddOrUpdate(@"C:\Test\Assembly1.dll", "oldHash==");
-        
+
         var csvPath = Path.Combine(tempDirectory, "replacement.csv");
         File.WriteAllText(csvPath, "C:\\Test\\Assembly2.dll,newHash==");
 
@@ -344,7 +344,7 @@ public class AssemblyHashStoreTests : IDisposable
         var path1 = @"C:\Test\Assembly1.dll";
         var path2 = @"C:\Test\Assembly2.dll";
         var path3 = @"C:\Test\Assembly3.dll";
-        
+
         store.AddOrUpdate(path1, "hash1==");
         store.AddOrUpdate(path2, "hash2==");
         store.AddOrUpdate(path3, "hash3==");

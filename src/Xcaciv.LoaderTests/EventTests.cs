@@ -20,7 +20,7 @@ public class EventTests
     public EventTests(ITestOutputHelper output)
     {
         this.output = output;
-        
+
 #if DEBUG
         const string configuration = "Debug";
 #else
@@ -39,7 +39,7 @@ public class EventTests
         string? capturedPath = null;
         string? capturedName = null;
         Version? capturedVersion = null;
-        
+
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         context.AssemblyLoaded += (path, name, version) =>
         {
@@ -47,10 +47,10 @@ public class EventTests
             capturedName = name;
             capturedVersion = version;
         };
-        
+
         // Act
         context.CreateInstance<IClass1>("Class1");
-        
+
         // Assert
         Assert.NotNull(capturedPath);
         Assert.NotNull(capturedName);
@@ -66,7 +66,7 @@ public class EventTests
         string? capturedPath = null;
         string? capturedName = null;
         Version? capturedVersion = null;
-        
+
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         context.AssemblyLoaded += (path, name, version) =>
         {
@@ -74,10 +74,10 @@ public class EventTests
             capturedName = name;
             capturedVersion = version;
         };
-        
+
         // Act
         context.CreateInstance<IClass1>("Class1");
-        
+
         // Assert
         Assert.Equal(Path.GetFullPath(simpleDllPath), capturedPath);
         Assert.Contains("Version=", capturedName); // Full name includes version
@@ -92,15 +92,15 @@ public class EventTests
         int subscriber1Called = 0;
         int subscriber2Called = 0;
         int subscriber3Called = 0;
-        
+
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         context.AssemblyLoaded += (path, name, version) => subscriber1Called++;
         context.AssemblyLoaded += (path, name, version) => subscriber2Called++;
         context.AssemblyLoaded += (path, name, version) => subscriber3Called++;
-        
+
         // Act
         context.CreateInstance<IClass1>("Class1");
-        
+
         // Assert
         Assert.Equal(1, subscriber1Called);
         Assert.Equal(1, subscriber2Called);
@@ -118,17 +118,17 @@ public class EventTests
         string? capturedPath = null;
         Exception? capturedException = null;
         var nonExistentPath = Path.Combine(Path.GetTempPath(), "nonexistent.dll");
-        
+
         using var context = new AssemblyContext(nonExistentPath, basePathRestriction: "*");
         context.AssemblyLoadFailed += (path, ex) =>
         {
             capturedPath = path;
             capturedException = ex;
         };
-        
+
         // Act & Assert
         Assert.Throws<FileNotFoundException>(() => context.CreateInstance("Class1"));
-        
+
         // Assert event was raised
         Assert.NotNull(capturedPath);
         Assert.NotNull(capturedException);
@@ -143,10 +143,10 @@ public class EventTests
         string? capturedPath = null;
         Exception? capturedException = null;
         var badImagePath = Path.Combine(Path.GetTempPath(), "badimage.dll");
-        
+
         // Create a file with invalid content
         File.WriteAllText(badImagePath, "This is not a valid assembly");
-        
+
         try
         {
             using var context = new AssemblyContext(badImagePath, basePathRestriction: "*");
@@ -155,10 +155,10 @@ public class EventTests
                 capturedPath = path;
                 capturedException = ex;
             };
-            
+
             // Act & Assert
             Assert.Throws<BadImageFormatException>(() => context.CreateInstance("Class1"));
-            
+
             // Assert event was raised
             Assert.NotNull(capturedPath);
             Assert.NotNull(capturedException);
@@ -181,20 +181,20 @@ public class EventTests
         // Arrange
         string? capturedPath = null;
         bool? capturedSuccess = null;
-        
+
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         context.AssemblyUnloaded += (path, success) =>
         {
             capturedPath = path;
             capturedSuccess = success;
         };
-        
+
         // Load assembly first
         context.CreateInstance<IClass1>("Class1");
-        
+
         // Act
         var unloadResult = context.Unload();
-        
+
         // Assert
         Assert.True(unloadResult);
         Assert.NotNull(capturedPath);
@@ -209,20 +209,20 @@ public class EventTests
         // Arrange
         string? capturedPath = null;
         bool? capturedSuccess = null;
-        
+
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         context.AssemblyUnloaded += (path, success) =>
         {
             capturedPath = path;
             capturedSuccess = success;
         };
-        
+
         // Load assembly first
         context.CreateInstance<IClass1>("Class1");
-        
+
         // Act
         var unloadResult = await context.UnloadAsync();
-        
+
         // Assert
         Assert.True(unloadResult);
         Assert.NotNull(capturedPath);
@@ -238,17 +238,17 @@ public class EventTests
     {
         // Arrange - SecurityViolation event is instance-based, not available in static VerifyPath
         var systemPath = @"C:\Windows\System32\test.dll";
-        
+
         // Skip if not on Windows
         if (!OperatingSystem.IsWindows())
         {
             return;
         }
-        
+
         // Act & Assert - Use STRICT policy to actually block System32
-        var ex = Assert.Throws<SecurityException>(() => 
+        var ex = Assert.Throws<SecurityException>(() =>
             AssemblyContext.VerifyPath(systemPath, "*", AssemblySecurityPolicy.Strict));
-        
+
         // Assert
         Assert.Contains("system directories", ex.Message, StringComparison.OrdinalIgnoreCase);
         // Note: SecurityViolation event is only raised in instance methods, not static VerifyPath
@@ -259,17 +259,17 @@ public class EventTests
     {
         // Arrange - Use STRICT policy to block System32
         var systemPath = @"C:\Windows\System32\test.dll";
-        
+
         // Skip if not on Windows
         if (!OperatingSystem.IsWindows())
         {
             return;
         }
-        
+
         // Act & Assert - Constructor calls VerifyPath which throws before we can subscribe to events
-        var ex = Assert.Throws<SecurityException>(() => 
+        var ex = Assert.Throws<SecurityException>(() =>
             new AssemblyContext(systemPath, basePathRestriction: "*", securityPolicy: AssemblySecurityPolicy.Strict));
-        
+
         Assert.Contains("system directories", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -284,7 +284,7 @@ public class EventTests
         int eventCallCount = 0;
         string? capturedDependencyName = null;
         string? capturedResolvedPath = null;
-        
+
         using var context = new AssemblyContext(dependentDllPath, basePathRestriction: "*");
         context.DependencyResolved += (name, path) =>
         {
@@ -293,11 +293,11 @@ public class EventTests
             capturedResolvedPath = path;
             output.WriteLine($"Dependency resolved: {name} from {path}");
         };
-        
+
         // Act
         var instance = context.CreateInstance<IClass1>("Class1");
         var result = instance.Stuff("test");
-        
+
         // Assert
         Assert.True(eventCallCount > 0, "Dependency resolution event should fire for Fastenshtein dependency");
         Assert.NotNull(capturedDependencyName);
@@ -311,18 +311,18 @@ public class EventTests
         // Arrange
         string? capturedDependencyName = null;
         string? capturedResolvedPath = null;
-        
+
         using var context = new AssemblyContext(dependentDllPath, basePathRestriction: "*");
         context.DependencyResolved += (name, path) =>
         {
             capturedDependencyName = name;
             capturedResolvedPath = path;
         };
-        
+
         // Act
         var instance = context.CreateInstance<IClass1>("Class1");
         instance.Stuff("test");
-        
+
         // Assert
         if (capturedDependencyName != null)
         {
@@ -341,17 +341,17 @@ public class EventTests
     {
         // Arrange
         var testPath = Path.Combine(Path.GetTempPath(), "test.dll");
-        
+
         File.WriteAllText(testPath, "dummy");
-        
+
         try
         {
             // We need to subscribe BEFORE construction, which means we need a different approach
             // Let's test that the constructor succeeds with wildcard
-            
+
             // Act
             using var context = new AssemblyContext(testPath, basePathRestriction: "*");
-            
+
             // Assert
             Assert.Equal("*", context.BasePathRestriction);
             // Event fires during construction, before we can subscribe
@@ -370,14 +370,14 @@ public class EventTests
         // Arrange
         var tempDir = Path.GetTempPath();
         var testPath = Path.Combine(tempDir, "test.dll");
-        
+
         File.WriteAllText(testPath, "dummy");
-        
+
         try
         {
             // Act
             using var context = new AssemblyContext(testPath, basePathRestriction: tempDir);
-            
+
             // Assert
             Assert.NotEqual("*", context.BasePathRestriction);
             Assert.Equal(tempDir, context.BasePathRestriction);
@@ -399,7 +399,7 @@ public class EventTests
         // Arrange
         int eventCallCount = 0;
         var lockObj = new object();
-        
+
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         context.AssemblyLoaded += (path, name, version) =>
         {
@@ -408,10 +408,10 @@ public class EventTests
                 eventCallCount++;
             }
         };
-        
+
         // Act
         context.CreateInstance<IClass1>("Class1");
-        
+
         // Assert
         Assert.Equal(1, eventCallCount);
     }
@@ -426,7 +426,7 @@ public class EventTests
         // Arrange
         bool eventFired = false;
         bool loadCompleted = false;
-        
+
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         context.AssemblyLoaded += (path, name, version) =>
         {
@@ -434,11 +434,11 @@ public class EventTests
             // At this point, the assembly should be loaded
             Assert.True(loadCompleted || !loadCompleted); // Load is in progress or completed
         };
-        
+
         // Act
         var instance = context.CreateInstance<IClass1>("Class1");
         loadCompleted = true;
-        
+
         // Assert
         Assert.NotNull(instance);
         Assert.True(eventFired);
@@ -451,21 +451,21 @@ public class EventTests
         // Arrange
         bool eventFired = false;
         bool unloadCompleted = false;
-        
+
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         context.AssemblyUnloaded += (path, success) =>
         {
             eventFired = true;
             // Event should fire after unload
         };
-        
+
         // Load first
         context.CreateInstance<IClass1>("Class1");
-        
+
         // Act
         var result = context.Unload();
         unloadCompleted = true;
-        
+
         // Assert
         Assert.True(result);
         Assert.True(eventFired);
@@ -482,17 +482,17 @@ public class EventTests
         // Arrange
         int callCount = 0;
         Action<string, string, Version?> handler = (path, name, version) => callCount++;
-        
+
         using var context = new AssemblyContext(simpleDllPath, basePathRestriction: "*");
         context.AssemblyLoaded += handler;
-        
+
         // Load once
         context.CreateInstance<IClass1>("Class1");
         Assert.Equal(1, callCount);
-        
+
         // Unsubscribe
         context.AssemblyLoaded -= handler;
-        
+
         // Try to trigger again (but assembly is already loaded, so this won't trigger the event again)
         // This test validates the unsubscribe mechanism
         Assert.Equal(1, callCount); // Count should still be 1

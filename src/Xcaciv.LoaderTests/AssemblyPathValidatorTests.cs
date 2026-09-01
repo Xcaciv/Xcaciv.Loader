@@ -252,7 +252,7 @@ public class AssemblyPathValidatorTests
         var unsafePath = "C:\\Test\\..\\..\\Windows\\test.dll";
 
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => 
+        var ex = Assert.Throws<ArgumentException>(() =>
             AssemblyPathValidator.ValidateAndSanitize(unsafePath));
         Assert.Contains("failed safety checks", ex.Message);
     }
@@ -264,7 +264,7 @@ public class AssemblyPathValidatorTests
         var invalidPath = "C:\\Test\\Assembly.txt";
 
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => 
+        var ex = Assert.Throws<ArgumentException>(() =>
             AssemblyPathValidator.ValidateAndSanitize(invalidPath));
         Assert.Contains("valid assembly extension", ex.Message);
     }
@@ -350,7 +350,7 @@ public class AssemblyPathValidatorTests
     public void ValidateAndSanitize_VariousDangerousPatterns_ThrowsArgumentException(string dangerousPath)
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => 
+        Assert.Throws<ArgumentException>(() =>
             AssemblyPathValidator.ValidateAndSanitize(dangerousPath));
     }
 }

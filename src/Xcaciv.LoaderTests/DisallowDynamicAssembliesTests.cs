@@ -18,9 +18,9 @@ public class DisallowDynamicAssembliesTests
     {
         // Arrange & Act
         var strictPolicy = AssemblySecurityPolicy.Strict;
-        
+
         // Assert
-        Assert.True(strictPolicy.DisallowDynamicAssemblies, 
+        Assert.True(strictPolicy.DisallowDynamicAssemblies,
             "Strict policy should have DisallowDynamicAssemblies enabled");
     }
 
@@ -29,9 +29,9 @@ public class DisallowDynamicAssembliesTests
     {
         // Arrange & Act
         var defaultPolicy = AssemblySecurityPolicy.Default;
-        
+
         // Assert
-        Assert.False(defaultPolicy.DisallowDynamicAssemblies, 
+        Assert.False(defaultPolicy.DisallowDynamicAssemblies,
             "Default policy should have DisallowDynamicAssemblies disabled");
     }
 
@@ -40,9 +40,9 @@ public class DisallowDynamicAssembliesTests
     {
         // Arrange & Act
         var customPolicy = new AssemblySecurityPolicy(new[] { "custom" });
-        
+
         // Assert
-        Assert.False(customPolicy.DisallowDynamicAssemblies, 
+        Assert.False(customPolicy.DisallowDynamicAssemblies,
             "Custom policy should have DisallowDynamicAssemblies disabled");
     }
 
@@ -51,7 +51,7 @@ public class DisallowDynamicAssembliesTests
     {
         // Arrange & Act
         var strictPolicy = new AssemblySecurityPolicy(strictMode: true);
-        
+
         // Assert
         Assert.True(strictPolicy.StrictMode);
         Assert.True(strictPolicy.DisallowDynamicAssemblies,
@@ -70,10 +70,10 @@ public class DisallowDynamicAssembliesTests
         try
         {
             File.WriteAllText(testPath, "test");
-            
+
             // Act
             using var context = new AssemblyContext(testPath, basePathRestriction: "*");
-            
+
             // Assert
             Assert.NotNull(context.SecurityPolicy);
             Assert.False(context.SecurityPolicy.DisallowDynamicAssemblies);
@@ -82,7 +82,7 @@ public class DisallowDynamicAssembliesTests
         {
             GC.Collect();
             GC.WaitForPendingFinalizers();
-            
+
             if (File.Exists(testPath))
             {
                 try
@@ -105,13 +105,13 @@ public class DisallowDynamicAssembliesTests
         try
         {
             File.WriteAllText(testPath, "test");
-            
+
             // Act
             using var context = new AssemblyContext(
-                testPath, 
+                testPath,
                 basePathRestriction: "*",
                 securityPolicy: AssemblySecurityPolicy.Strict);
-            
+
             // Assert
             Assert.NotNull(context.SecurityPolicy);
             Assert.True(context.SecurityPolicy.DisallowDynamicAssemblies);
@@ -121,7 +121,7 @@ public class DisallowDynamicAssembliesTests
             // Ensure context is fully disposed
             GC.Collect();
             GC.WaitForPendingFinalizers();
-            
+
             if (File.Exists(testPath))
             {
                 try
@@ -145,13 +145,13 @@ public class DisallowDynamicAssembliesTests
         try
         {
             File.WriteAllText(testPath, "test");
-            
+
             // Act
             using var context = new AssemblyContext(
                 testPath,
                 basePathRestriction: "*",
                 securityPolicy: customPolicy);
-            
+
             // Assert
             Assert.NotNull(context.SecurityPolicy);
             Assert.False(context.SecurityPolicy.DisallowDynamicAssemblies);
@@ -160,7 +160,7 @@ public class DisallowDynamicAssembliesTests
         {
             GC.Collect();
             GC.WaitForPendingFinalizers();
-            
+
             if (File.Exists(testPath))
             {
                 try
@@ -184,7 +184,7 @@ public class DisallowDynamicAssembliesTests
     {
         // Arrange
         var policy = AssemblySecurityPolicy.Default;
-        
+
         // The DisallowDynamicAssemblies property has init-only accessor
         // This test verifies the property exists and has the expected value
         Assert.IsType<bool>(policy.DisallowDynamicAssemblies);
@@ -200,18 +200,18 @@ public class DisallowDynamicAssembliesTests
         {
             File.WriteAllText(testPath1, "test1");
             File.WriteAllText(testPath2, "test2");
-            
+
             // Act
             using var context1 = new AssemblyContext(
                 testPath1,
                 basePathRestriction: "*",
                 securityPolicy: AssemblySecurityPolicy.Default);
-            
+
             using var context2 = new AssemblyContext(
                 testPath2,
                 basePathRestriction: "*",
                 securityPolicy: AssemblySecurityPolicy.Strict);
-            
+
             // Assert
             Assert.False(context1.SecurityPolicy.DisallowDynamicAssemblies);
             Assert.True(context2.SecurityPolicy.DisallowDynamicAssemblies);
@@ -234,10 +234,10 @@ public class DisallowDynamicAssembliesTests
     {
         // The DisallowDynamicAssemblies policy is independent of path-based restrictions
         // This verifies that both can be used together without conflicts
-        
+
         // Arrange
         var policy = AssemblySecurityPolicy.Strict;
-        
+
         // Assert
         Assert.True(policy.StrictMode);
         Assert.True(policy.DisallowDynamicAssemblies);
@@ -249,7 +249,7 @@ public class DisallowDynamicAssembliesTests
     {
         // Create a strict policy which has DisallowDynamicAssemblies enabled
         var strictPolicy = new AssemblySecurityPolicy(strictMode: true);
-        
+
         // Assert
         Assert.True(strictPolicy.DisallowDynamicAssemblies);
         Assert.True(strictPolicy.StrictMode);
@@ -266,11 +266,11 @@ public class DisallowDynamicAssembliesTests
         // Arrange & Act
         var strictPolicy = AssemblySecurityPolicy.Strict;
         var defaultPolicy = AssemblySecurityPolicy.Default;
-        
+
         // Assert
         Assert.True(strictPolicy.StrictMode);
         Assert.True(strictPolicy.DisallowDynamicAssemblies);
-        
+
         // Strict should have more forbidden directories than default
         Assert.True(strictPolicy.ForbiddenDirectories.Count > defaultPolicy.ForbiddenDirectories.Count,
             "Strict policy should have more forbidden directories than default");

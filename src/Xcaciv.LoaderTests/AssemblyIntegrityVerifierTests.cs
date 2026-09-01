@@ -19,7 +19,7 @@ public class AssemblyIntegrityVerifierTests : IDisposable
         tempDirectory = Path.Combine(Path.GetTempPath(), $"LoaderTests_{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempDirectory);
         testAssemblyPath = Path.Combine(tempDirectory, "TestAssembly.dll");
-        
+
         // Create a test file
         File.WriteAllText(testAssemblyPath, "Test assembly content for hashing");
     }
@@ -145,9 +145,9 @@ public class AssemblyIntegrityVerifierTests : IDisposable
             learningMode: false); // Strict mode
 
         // Act & Assert
-        var ex = Assert.Throws<SecurityException>(() => 
+        var ex = Assert.Throws<SecurityException>(() =>
             verifier.VerifyIntegrity(testAssemblyPath));
-        
+
         Assert.Contains("No trusted hash found", ex.Message);
         Assert.Contains(testAssemblyPath, ex.Message);
     }
@@ -268,7 +268,7 @@ public class AssemblyIntegrityVerifierTests : IDisposable
         // Assert
         Assert.NotNull(hash);
         Assert.NotEmpty(hash);
-        
+
         // Verify it's valid base64
         var bytes = Convert.FromBase64String(hash);
         Assert.Equal(32, bytes.Length); // SHA256 is 256 bits = 32 bytes
@@ -327,10 +327,10 @@ public class AssemblyIntegrityVerifierTests : IDisposable
     {
         // Arrange
         var verifier = new AssemblyIntegrityVerifier(enabled: true);
-        
+
         var file1 = Path.Combine(tempDirectory, "File1.dll");
         var file2 = Path.Combine(tempDirectory, "File2.dll");
-        
+
         File.WriteAllText(file1, "Content A");
         File.WriteAllText(file2, "Content B");
 
@@ -430,12 +430,12 @@ public class AssemblyIntegrityVerifierTests : IDisposable
         verifier.HashStore.AddOrUpdate(testAssemblyPath, "manualHash==");
 
         // Act & Assert - Existing hash should be verified even in learning mode
-        var ex = Assert.Throws<SecurityException>(() => 
+        var ex = Assert.Throws<SecurityException>(() =>
             verifier.VerifyIntegrity(testAssemblyPath));
-        
+
         Assert.Contains("integrity verification failed", ex.Message);
         Assert.Contains("manualHash==", ex.Message);
-        
+
         // Hash should not be replaced
         Assert.True(verifier.HashStore.TryGetHash(testAssemblyPath, out var storedHash));
         Assert.Equal("manualHash==", storedHash); // Should not be replaced
@@ -447,7 +447,7 @@ public class AssemblyIntegrityVerifierTests : IDisposable
         // Arrange
         var verifier = new AssemblyIntegrityVerifier(enabled: true);
         var modifiableFile = Path.Combine(tempDirectory, "Modifiable.dll");
-        
+
         File.WriteAllText(modifiableFile, "Original content");
         var originalHash = verifier.ComputeHash(modifiableFile);
 

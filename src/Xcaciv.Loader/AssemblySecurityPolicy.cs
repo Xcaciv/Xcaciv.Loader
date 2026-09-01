@@ -23,17 +23,17 @@ public class AssemblySecurityPolicy
         "grouppolicy",
         "systemprofile"
     ];
-    
+
     // Extended list of forbidden directories for strict mode
     private static readonly string[] StrictForbiddenDirectories =
     [
         // Basic system directories
         "windows", "system32", "programfiles", "programfiles(x86)", "programdata",
         // Specific sensitive directories
-        "grouppolicy", "systemprofile", "winevt\\logs", "credentials", 
+        "grouppolicy", "systemprofile", "winevt\\logs", "credentials",
         "windows defender", "appdata\\local\\microsoft\\credentials"
     ];
-    
+
     /// <summary>
     /// Gets the default security policy with basic system directory restrictions.
     /// </summary>
@@ -46,7 +46,7 @@ public class AssemblySecurityPolicy
     /// <para>Suitable for most production scenarios.</para>
     /// </remarks>
     public static AssemblySecurityPolicy Default { get; } = new();
-    
+
     /// <summary>
     /// Gets the strict security policy with enhanced system directory restrictions.
     /// </summary>
@@ -61,18 +61,18 @@ public class AssemblySecurityPolicy
     /// <para>Recommended for high-security environments.</para>
     /// </remarks>
     public static AssemblySecurityPolicy Strict { get; } = new(strictMode: true);
-    
+
     /// <summary>
     /// Gets a value indicating whether strict mode is enabled.
     /// </summary>
     public bool StrictMode { get; init; }
-    
+
     /// <summary>
     /// If true, disallows loading dynamic/in-memory assemblies
     /// (e.g., ones created via Reflection.Emit like AssemblyBuilder, TypeBuilder, DynamicMethod).
     /// </summary>
     public bool DisallowDynamicAssemblies { get; init; }
-    
+
     /// <summary>
     /// Gets the read-only list of forbidden directory names (case-insensitive).
     /// </summary>
@@ -81,7 +81,7 @@ public class AssemblySecurityPolicy
     /// For example, "system32" will match "C:\Windows\System32\".
     /// </remarks>
     public IReadOnlyList<string> ForbiddenDirectories { get; init; }
-    
+
     /// <summary>
     /// Creates a new security policy with the specified configuration.
     /// </summary>
@@ -106,11 +106,11 @@ public class AssemblySecurityPolicy
     {
         StrictMode = strictMode;
         DisallowDynamicAssemblies = strictMode; // Enhanced security in strict mode
-        ForbiddenDirectories = strictMode 
-            ? StrictForbiddenDirectories 
+        ForbiddenDirectories = strictMode
+            ? StrictForbiddenDirectories
             : DefaultForbiddenDirectories;
     }
-    
+
     /// <summary>
     /// Creates a custom security policy with a specific list of forbidden directories.
     /// </summary>
@@ -131,12 +131,12 @@ public class AssemblySecurityPolicy
     public AssemblySecurityPolicy(string[] forbiddenDirectories)
     {
         ArgumentNullException.ThrowIfNull(forbiddenDirectories, nameof(forbiddenDirectories));
-        
+
         StrictMode = false; // Custom policy
         DisallowDynamicAssemblies = false;
         ForbiddenDirectories = forbiddenDirectories;
     }
-    
+
     /// <summary>
     /// Checks if a given path contains any forbidden directory.
     /// </summary>
@@ -150,14 +150,14 @@ public class AssemblySecurityPolicy
     {
         if (String.IsNullOrWhiteSpace(fullPath))
             return false;
-        
+
         // Normalize path: lowercase, forward slashes to backslashes, remove spaces for matching
         var normalizedPath = fullPath.ToLowerInvariant().Replace('/', '\\').Replace(" ", String.Empty);
-        
+
         foreach (var forbiddenDir in ForbiddenDirectories)
         {
             var normalizedForbiddenDir = forbiddenDir.ToLowerInvariant().Replace(" ", String.Empty);
-            
+
             // Check for directory as a path component (surrounded by backslashes or at start/end)
             if (normalizedPath.Contains($"\\{normalizedForbiddenDir}\\", StringComparison.OrdinalIgnoreCase) ||
                 normalizedPath.StartsWith($"{normalizedForbiddenDir}\\", StringComparison.OrdinalIgnoreCase) ||
@@ -168,7 +168,7 @@ public class AssemblySecurityPolicy
                 return true;
             }
         }
-        
+
         return false;
     }
 }

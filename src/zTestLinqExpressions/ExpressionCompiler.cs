@@ -21,7 +21,7 @@ public class ExpressionCompiler : IClass1
             ),
             parameter
         );
-        
+
         var compiled = expression.Compile();
         var result = compiled(input);
         return result + " - compiled at runtime";
