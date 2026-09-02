@@ -4,8 +4,8 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 2.x     | :white_check_mark: |
-| 1.x     | :x: (end of life 2026-06-01; see [MIGRATION-v1-to-v2.md](docs/MIGRATION-v1-to-v2.md)) |
+| 2.x     | Supported |
+| 1.x     | Not supported (end of life 2026-06-01; see [MIGRATION-v1-to-v2.md](docs/MIGRATION-v1-to-v2.md)) |
 
 Only the latest 2.x release is actively maintained. There is no formal support
 SLA — this is a single-maintainer open source project — but security reports
