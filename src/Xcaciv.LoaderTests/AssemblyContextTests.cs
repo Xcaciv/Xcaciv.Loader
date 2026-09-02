@@ -12,18 +12,18 @@ namespace Xcaciv.Loader.Tests
 {
     public class AssemblyContextTests
     {
-        private ITestOutputHelper _testOutput;
+        private ITestOutputHelper testOutput;
         private string simpleDllPath;
         private string dependentDllPath;
 
         public AssemblyContextTests(ITestOutputHelper output)
         {
-            this._testOutput = output;
+            this.testOutput = output;
 #if DEBUG
-            this._testOutput.WriteLine("Tests in Debug mode");
+            this.testOutput.WriteLine("Tests in Debug mode");
             const string configuration = "Debug";
 #else
-            this._testOutput.WriteLine("Tests in Release mode??");
+            this.testOutput.WriteLine("Tests in Release mode??");
             const string configuration = "Release";
 #endif
             this.simpleDllPath = System.IO.Path.Combine("..", "..", "..", "..", "TestAssembly", "bin", configuration, "net8.0", "zTestAssembly.dll");
